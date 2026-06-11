@@ -26,6 +26,11 @@ Fixtures must record:
 Golden outputs should be generated from the owning upstream implementation, not
 from host-language rewrites.
 
+External operators follow the same rule. A language binding can expose operator
+metadata before execution support exists, but an operator cannot be marked
+`execute-local`, `execute-remote`, or `parity-validated` until a fixture proves
+that the host-language adapter delegates to the same upstream behavior.
+
 ## Initial parity targets
 
 - PLS pipelines backed by `nirs4all-methods`.
@@ -33,3 +38,4 @@ from host-language rewrites.
 - Dataset materialization backed by `nirs4all-io`.
 - Catalog resolution backed by `nirs4all-datasets`.
 - DAG execution descriptors backed by `dag-ml` and `dag-ml-data`.
+- External operator adapters once the relevant executor can plan or call them.

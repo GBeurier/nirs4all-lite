@@ -41,6 +41,13 @@ Pipelines built by `nirs4all-lite` are expected to compose those domains, not
 reimplement them. For example, a binding should make it possible to reach the
 formats and methods layers from the top-level `nirs4all` package.
 
+External operator support must stay execution-gated. When an upstream executor
+can plan or call an external operator, each language binding should expose that
+operator through native host idioms rather than a raw lowest-common-denominator
+API. Until the execution path exists, bindings must report the capability as
+unavailable instead of shipping a fake local implementation. See
+[`docs/OPERATORS.md`](docs/OPERATORS.md).
+
 ## Repository layout
 
 ```text

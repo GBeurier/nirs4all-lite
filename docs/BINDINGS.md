@@ -8,6 +8,8 @@ Every binding must:
 - translate host-native objects to upstream contracts;
 - preserve ownership and lifetime rules across FFI boundaries;
 - report unavailable upstream components explicitly;
+- expose external operators through host-language idioms only when the upstream
+  execution path can actually plan or call them;
 - participate in parity checks before release.
 
 ## Python
@@ -16,6 +18,8 @@ Every binding must:
 - Import name: `nirs4all_lite`.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
+- External operators should look like normal sklearn-compatible transformers or
+  estimators when they participate in Python execution.
 - Do not shadow the full Python `nirs4all` package until the core replacement
   migration is intentional.
 
@@ -23,12 +27,16 @@ Every binding must:
 
 - Crate name: `nirs4all`.
 - Use `Result`-returning APIs and typed wrappers around upstream crates.
+- External operators should use traits and typed builder APIs, with capabilities
+  declared at compile time or through explicit runtime feature checks.
 - Keep FFI handles explicit; never hide ownership transfers.
 
 ## JavaScript/WASM
 
 - npm package name: `nirs4all`.
 - Expose typed ESM APIs and browser-safe WASM loaders.
+- External operators should be ESM functions/classes over browser-safe values
+  and `TypedArray` data, with async initialization where WASM is required.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates are `nirs4all-formats-wasm`,
   `nirs4all-io-wasm`, `nirs4all-datasets-wasm`, `dag-ml-wasm`,
@@ -38,6 +46,8 @@ Every binding must:
 
 - Package name: `nirs4all`.
 - Provide formula/data-frame paths where appropriate.
+- External operators should expose S3 generics and formula/data-frame adapters
+  where that is the natural R interface.
 - Keep native handles opaque and expose provenance in returned objects.
 - Current R package candidates include `nirs4allformats`, `nirs4allio`,
   `nirs4alldatasets`, `dagmldata`, and `n4m` / `pls4all` for methods. `dag-ml`
@@ -47,5 +57,7 @@ Every binding must:
 
 - Namespace: `+nirs4all`.
 - Prefer matrices/tables and explicit options structs.
+- External operators should use function handles or small handle classes with
+  `fit`/`predict`/`transform`-style methods when execution support exists.
 - Keep Octave compatibility in the public subset unless a function is marked
   MATLAB-only.

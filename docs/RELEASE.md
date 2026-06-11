@@ -16,7 +16,9 @@ Before release:
 3. Run upstream binding parity gates.
 4. Run lite cross-language parity gates.
 5. Run equivalent-pipeline checks against full Python `nirs4all`.
-6. Publish artifacts and record provenance in the release notes.
+6. Verify external operator capability levels: metadata-only operators must not
+   be marketed as executable, and executable operators must have parity fixtures.
+7. Publish artifacts and record provenance in the release notes.
 
 Local artifact commands:
 
