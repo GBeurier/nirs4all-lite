@@ -35,10 +35,14 @@ replaced by the lite Python binding intentionally.
 ## Checks
 
 ```bash
+make test
 cargo test --workspace
 PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
 npm test --prefix bindings/wasm
+R CMD build bindings/r --outdir=dist/r && R CMD check --no-manual dist/r/nirs4all_*.tar.gz
+octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
 ```
 
-R and MATLAB/Octave packaging gates should be added before publishing those
-artifacts.
+`make build` produces Python, npm, R, MATLAB/Octave, and Rust package
+artifacts when the relevant toolchains are installed. R and Octave may be
+available only in CI on some workstations.

@@ -12,6 +12,8 @@ test('expected upstreams are registered', () => {
 
 test('upstream lookup returns metadata', () => {
   assert.equal(upstream('methods').role, 'Portable C ABI PLS/NIRS numerical engine');
+  assert.deepEqual(upstream('methods').candidates, ['@nirs4all/methods-wasm']);
+  assert.deepEqual(upstream('formats').candidates, ['nirs4all-formats-wasm']);
   assert.equal(upstream('missing'), null);
 });
 

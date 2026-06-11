@@ -17,3 +17,18 @@ Before release:
 4. Run lite cross-language parity gates.
 5. Run equivalent-pipeline checks against full Python `nirs4all`.
 6. Publish artifacts and record provenance in the release notes.
+
+Local artifact commands:
+
+```bash
+make test
+make build-python
+make build-npm
+make build-r
+make build-matlab
+cargo package -p nirs4all
+```
+
+`R CMD build/check`, Octave smoke tests, and CRAN/R-universe validation require
+R/Octave toolchains. They are part of CI because they may not be available on
+every development workstation.

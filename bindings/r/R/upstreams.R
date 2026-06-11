@@ -1,10 +1,10 @@
 NIRS4ALL_UPSTREAMS <- list(
-  dag_ml = list(candidates = c("dagml"), role = "Leakage-safe DAG/ML execution coordinator"),
+  dag_ml = list(candidates = character(), role = "Leakage-safe DAG/ML execution coordinator"),
   dag_ml_data = list(candidates = c("dagmldata"), role = "Sample-aligned data contracts for DAG/ML runtimes"),
   formats = list(candidates = c("nirs4allformats"), role = "Spectroscopy/NIRS vendor file readers"),
   io = list(candidates = c("nirs4allio"), role = "Dataset assembly bridge"),
   datasets = list(candidates = c("nirs4alldatasets"), role = "DOI-pinned NIRS dataset catalog"),
-  methods = list(candidates = c("nirs4allmethods"), role = "Portable C ABI PLS/NIRS numerical engine")
+  methods = list(candidates = c("n4m", "pls4all"), role = "Portable C ABI PLS/NIRS numerical engine")
 )
 
 nirs4all_upstreams <- function() {
@@ -13,6 +13,9 @@ nirs4all_upstreams <- function() {
     available = vapply(NIRS4ALL_UPSTREAMS, function(item) {
       any(vapply(item$candidates, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1)))
     }, logical(1)),
+    candidates = vapply(NIRS4ALL_UPSTREAMS, function(item) {
+      paste(item$candidates, collapse = ",")
+    }, character(1)),
     role = vapply(NIRS4ALL_UPSTREAMS, function(item) item$role, character(1)),
     row.names = NULL
   )
@@ -22,6 +25,9 @@ nirs4all_require <- function(name) {
   item <- NIRS4ALL_UPSTREAMS[[name]]
   if (is.null(item)) {
     stop(sprintf("Unknown nirs4all upstream: %s", name), call. = FALSE)
+  }
+  if (length(item$candidates) == 0L) {
+    stop(sprintf("No R binding is currently declared for nirs4all upstream: %s", name), call. = FALSE)
   }
   for (candidate in item$candidates) {
     if (requireNamespace(candidate, quietly = TRUE)) {

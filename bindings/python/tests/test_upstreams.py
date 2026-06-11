@@ -19,6 +19,10 @@ class UpstreamRegistryTests(unittest.TestCase):
     def test_lazy_proxy_points_to_registered_upstream(self) -> None:
         self.assertEqual(repr(n4lite.methods), "LazyUpstream(name='methods')")
 
+    def test_methods_candidates_include_current_python_bindings(self) -> None:
+        self.assertIn("nirs4all_methods", n4lite.upstreams["methods"].candidates)
+        self.assertIn("pls4all", n4lite.upstreams["methods"].candidates)
+
     def test_unknown_upstream_is_rejected(self) -> None:
         with self.assertRaises(KeyError):
             n4lite.import_upstream("unknown")

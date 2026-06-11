@@ -44,7 +44,7 @@ upstreams: Mapping[str, Upstream] = {
     ),
     "methods": Upstream(
         key="methods",
-        candidates=("nirs4all_methods", "n4m", "nirs4all.methods"),
+        candidates=("nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"),
         role="Portable C ABI PLS/NIRS numerical engine",
     ),
 }

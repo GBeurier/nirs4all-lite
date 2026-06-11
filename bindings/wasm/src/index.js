@@ -1,32 +1,32 @@
 export const upstreams = Object.freeze([
   {
     key: 'dag_ml',
-    candidates: ['dag-ml'],
+    candidates: ['dag-ml-wasm'],
     role: 'Leakage-safe DAG/ML execution coordinator',
   },
   {
     key: 'dag_ml_data',
-    candidates: ['dag-ml-data'],
+    candidates: ['dag-ml-data-wasm'],
     role: 'Sample-aligned data contracts for DAG/ML runtimes',
   },
   {
     key: 'formats',
-    candidates: ['nirs4all-formats'],
+    candidates: ['nirs4all-formats-wasm'],
     role: 'Spectroscopy/NIRS vendor file readers',
   },
   {
     key: 'io',
-    candidates: ['nirs4all-io'],
+    candidates: ['nirs4all-io-wasm'],
     role: 'Dataset assembly bridge',
   },
   {
     key: 'datasets',
-    candidates: ['nirs4all-datasets'],
+    candidates: ['nirs4all-datasets-wasm'],
     role: 'DOI-pinned NIRS dataset catalog',
   },
   {
     key: 'methods',
-    candidates: ['nirs4all-methods'],
+    candidates: ['@nirs4all/methods-wasm'],
     role: 'Portable C ABI PLS/NIRS numerical engine',
   },
 ]);

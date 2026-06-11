@@ -80,7 +80,14 @@ mod tests {
         let keys: Vec<_> = UPSTREAMS.iter().map(|item| item.key).collect();
         assert_eq!(
             keys,
-            vec!["dag_ml", "dag_ml_data", "formats", "io", "datasets", "methods"]
+            vec![
+                "dag_ml",
+                "dag_ml_data",
+                "formats",
+                "io",
+                "datasets",
+                "methods"
+            ]
         );
     }
 

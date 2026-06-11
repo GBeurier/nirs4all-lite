@@ -24,9 +24,12 @@ through this aggregate.
 
 Run the checks matching the touched area:
 
+- `make test`
 - `cargo test --workspace`
 - `PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests`
 - `npm test --prefix bindings/wasm`
+- `R CMD build bindings/r --outdir=dist/r && R CMD check --no-manual dist/r/nirs4all_*.tar.gz`
+- `octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"`
 
 When parity fixtures are added, run the native-vs-binding and
 lite-vs-python-`nirs4all` parity suites before publishing.

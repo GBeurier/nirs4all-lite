@@ -8,8 +8,40 @@ version = "0.0.0"
 description = "Portable nirs4all aggregate binding over formats, IO, datasets, methods, dag-ml, and dag-ml-data"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "nirs4all contributors" }]
+keywords = ["nirs", "spectroscopy", "chemometrics", "wasm", "bindings"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+dag-ml = ["dag-ml>=0.1.0a0"]
+dag-ml-data = ["dag-ml-data>=0.1.0a0"]
+formats = ["nirs4all-formats>=0.1.0"]
+io = ["nirs4all-io>=0.1.0"]
+datasets = ["nirs4all-datasets>=0.2.0a1"]
+methods = ["nirs4all-methods>=0.98.0"]
+all = [
+    "dag-ml>=0.1.0a0",
+    "dag-ml-data>=0.1.0a0",
+    "nirs4all-formats>=0.1.0",
+    "nirs4all-io>=0.1.0",
+    "nirs4all-datasets>=0.2.0a1",
+    "nirs4all-methods>=0.98.0",
+]
+
+[project.urls]
+Homepage = "https://nirs4all.org"
+Repository = "https://github.com/GBeurier/nirs4all-lite"
+Issues = "https://github.com/GBeurier/nirs4all-lite/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nirs4all_lite"]

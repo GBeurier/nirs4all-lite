@@ -57,17 +57,21 @@ tests/parity/  # Cross-runtime parity fixture plan
 
 ## Current status
 
-This repository is the initial split scaffold. It contains testable binding
-manifests and upstream loader surfaces, but not yet the compiled upstream
-artifacts or cross-language release builds.
+This repository is now a buildable aggregate scaffold. It exposes the upstream
+domains in each target language, builds package artifacts for Python, npm,
+R, MATLAB/Octave, and Rust, and wires CI gates for those targets. The numerical
+and parsing behavior is still delegated to the upstream packages; `nirs4all-lite`
+does not vendor or reimplement those engines.
 
 ## Local checks
 
 ```bash
+make test
 cargo test --workspace
 PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
 npm test --prefix bindings/wasm
 ```
 
-R and MATLAB/Octave skeletons are intentionally metadata-only until packaging
-and runtime gates are wired.
+`make build` produces the language artifacts when the required toolchains are
+installed. R and MATLAB/Octave checks require local R/Octave installations; CI
+also runs those gates.
