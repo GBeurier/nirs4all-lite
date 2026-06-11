@@ -14,6 +14,7 @@ test-python:
 	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest discover -s bindings/python/tests
 
 test-wasm:
+	npm ci --prefix bindings/wasm
 	npm test --prefix bindings/wasm
 
 test-r:

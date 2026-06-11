@@ -26,6 +26,9 @@
     "chemometrics",
     "wasm"
   ],
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
   "peerDependenciesMeta": {
     "@nirs4all/methods-wasm": {
       "optional": true
