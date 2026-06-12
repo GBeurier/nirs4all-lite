@@ -1,7 +1,7 @@
 PYTHON ?= python3
 DIST_DIR ?= dist
 
-.PHONY: test test-rust test-python test-python-parity test-wasm test-r test-r-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-rust test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
@@ -23,7 +23,10 @@ test-wasm:
 test-r:
 	R CMD check --no-manual bindings/r
 
-test-r-parity:
+test-r-fixtures:
+	diff -ru tests/parity/fixtures bindings/r/inst/extdata
+
+test-r-parity: test-r-fixtures
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \

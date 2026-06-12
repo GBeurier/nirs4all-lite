@@ -46,8 +46,8 @@ nirs4all_run_portable_pipeline <- function(source, dataset) {
   preprocessing <- list()
   for (step in plan$preprocessing) {
     if (identical(step$type, "StandardNormalVariate")) {
-      X_train <- engine$snv_transform(X_train)
-      X_test <- engine$snv_transform(X_test)
+      X_train <- engine$snv_transform(X_train, ddof = 0L)
+      X_test <- engine$snv_transform(X_test, ddof = 0L)
     } else if (identical(step$type, "SavitzkyGolay")) {
       params <- step$params
       X_train <- engine$savgol_transform(
