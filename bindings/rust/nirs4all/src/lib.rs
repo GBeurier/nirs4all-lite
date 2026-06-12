@@ -515,9 +515,31 @@ fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
         )?,
         polyorder: int_param(params.get("polyorder"), 3)?,
         deriv: int_param(params.get("deriv"), 0)?,
-        mode: 4,
+        mode: savgol_mode(params.get("mode"))?,
         cval: number_param(params.get("cval"), 0.0)?,
     })
+}
+
+fn savgol_mode(value: Option<&Value>) -> Result<i32, String> {
+    match value {
+        None => Ok(4),
+        Some(Value::String(mode)) => match mode.to_ascii_lowercase().as_str() {
+            "mirror" => Ok(0),
+            "constant" => Ok(1),
+            "nearest" => Ok(2),
+            "wrap" => Ok(3),
+            "interp" => Ok(4),
+            _ => Err(format!("unsupported Savitzky-Golay mode: {mode}")),
+        },
+        Some(value) => {
+            let mode = int_param(Some(value), 4)?;
+            if (0..=4).contains(&mode) {
+                Ok(mode)
+            } else {
+                Err(format!("unsupported Savitzky-Golay mode: {value}"))
+            }
+        }
+    }
 }
 
 fn component_values(step: &Value) -> Result<Vec<i32>, String> {
@@ -1143,6 +1165,36 @@ mod tests {
                 deriv: 0,
                 mode: 4,
                 cval: 0.0,
+            })]
+        );
+    }
+
+    #[test]
+    fn savgol_mode_and_cval_are_preserved() {
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "class": "nirs4all.operators.transforms.SavitzkyGolay",
+                    "params": { "window_length": 11, "mode": "constant", "cval": 7.25 }
+                },
+                {
+                    "model": {
+                        "class": "sklearn.cross_decomposition.PLSRegression",
+                        "params": { "n_components": 2 }
+                    }
+                }
+            ]
+        });
+        let plan = parse_execution_plan(&definition).unwrap();
+
+        assert_eq!(
+            plan.preprocessing,
+            vec![PortablePreprocessing::SavitzkyGolay(SavitzkyGolayParams {
+                window_length: 11,
+                polyorder: 3,
+                deriv: 0,
+                mode: 1,
+                cval: 7.25,
             })]
         );
     }

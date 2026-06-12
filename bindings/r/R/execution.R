@@ -56,7 +56,7 @@ nirs4all_run_portable_pipeline <- function(source, dataset) {
         polyorder = params[[2]],
         deriv = params[[3]],
         delta = 1.0,
-        mode = "interp",
+        mode = savgol_mode_name(params[[4]]),
         cval = params[[5]]
       )
       X_test <- engine$savgol_transform(
@@ -65,7 +65,7 @@ nirs4all_run_portable_pipeline <- function(source, dataset) {
         polyorder = params[[2]],
         deriv = params[[3]],
         delta = 1.0,
-        mode = "interp",
+        mode = savgol_mode_name(params[[4]]),
         cval = params[[5]]
       )
     } else {
@@ -229,9 +229,30 @@ savgol_params <- function(params) {
     as.integer(params$window_length %||% params$window %||% 11L),
     as.integer(params$polyorder %||% 3L),
     as.integer(params$deriv %||% 0L),
-    4L,
+    savgol_mode(params$mode %||% "interp"),
     as.numeric(params$cval %||% 0.0)
   )
+}
+
+savgol_mode <- function(value) {
+  modes <- c(mirror = 0L, constant = 1L, nearest = 2L, wrap = 3L, interp = 4L)
+  if (is.character(value)) {
+    key <- tolower(value[[1L]])
+    if (key %in% names(modes)) {
+      return(unname(modes[[key]]))
+    }
+    stop(sprintf("Unsupported Savitzky-Golay mode: %s", value[[1L]]), call. = FALSE)
+  }
+  mode <- as.integer(value)
+  if (!is.na(mode) && mode >= 0L && mode <= 4L) {
+    return(mode)
+  }
+  stop(sprintf("Unsupported Savitzky-Golay mode: %s", as.character(value)), call. = FALSE)
+}
+
+savgol_mode_name <- function(value) {
+  modes <- c("mirror", "constant", "nearest", "wrap", "interp")
+  modes[[savgol_mode(value) + 1L]]
 }
 
 component_values <- function(step) {

@@ -64,6 +64,26 @@ class PipelineContractTests(unittest.TestCase):
 
         self.assertEqual(plan["preprocessing"][0]["params"], [11, 3, 0, 4, 0.0])
 
+    def test_savgol_mode_and_cval_are_preserved(self) -> None:
+        plan = n4lite.parse_execution_plan(
+            {
+                "pipeline": [
+                    {
+                        "class": "nirs4all.operators.transforms.SavitzkyGolay",
+                        "params": {"window_length": 11, "mode": "constant", "cval": 7.25},
+                    },
+                    {
+                        "model": {
+                            "class": "sklearn.cross_decomposition.PLSRegression",
+                            "params": {"n_components": 2},
+                        }
+                    },
+                ]
+            }
+        )
+
+        self.assertEqual(plan["preprocessing"][0]["params"], [11, 3, 0, 1, 7.25])
+
     def test_steps_alias_and_direct_list_match_nirs4all_loader_surface(self) -> None:
         definition = n4lite.load_pipeline_definition(FIXTURE_DIR / "portable_methods_pipeline.json")
 

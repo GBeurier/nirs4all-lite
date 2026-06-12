@@ -32,6 +32,14 @@ PLS_CLASSES: frozenset[str] = frozenset(
         "sklearn.cross_decomposition._pls.PLSRegression",
     }
 )
+SAVGOL_MODES: dict[str, int] = {
+    "mirror": 0,
+    "constant": 1,
+    "nearest": 2,
+    "wrap": 3,
+    "interp": 4,
+}
+SAVGOL_MODE_NAMES: tuple[str, ...] = ("mirror", "constant", "nearest", "wrap", "interp")
 
 
 @dataclass(frozen=True)
@@ -229,13 +237,13 @@ def _make_transformer(step: dict[str, Any], snv_cls, savgol_cls):
     if step["type"] == "StandardNormalVariate":
         return snv_cls()
     if step["type"] == "SavitzkyGolay":
-        window_length, polyorder, deriv, _mode, cval = step["params"]
+        window_length, polyorder, deriv, mode, cval = step["params"]
         return savgol_cls(
             window_length=int(window_length),
             polyorder=int(polyorder),
             deriv=int(deriv),
             delta=1.0,
-            mode="interp",
+            mode=_savgol_mode_name(mode),
             cval=float(cval),
         )
     raise ValueError(f"Unsupported portable preprocessing step: {step['type']}")
@@ -249,9 +257,26 @@ def _savgol_params(params: dict[str, Any]) -> list[float | int]:
         int(params.get("window_length", params.get("window", 11))),
         int(params.get("polyorder", 3)),
         int(params.get("deriv", 0)),
-        4,
+        _savgol_mode(params.get("mode", "interp")),
         float(params.get("cval", 0.0)),
     ]
+
+
+def _savgol_mode(value: Any) -> int:
+    if isinstance(value, str):
+        key = value.lower()
+        if key in SAVGOL_MODES:
+            return SAVGOL_MODES[key]
+        raise ValueError(f"Unsupported Savitzky-Golay mode: {value!r}")
+    mode = int(value)
+    if 0 <= mode < len(SAVGOL_MODE_NAMES):
+        return mode
+    raise ValueError(f"Unsupported Savitzky-Golay mode: {value!r}")
+
+
+def _savgol_mode_name(value: Any) -> str:
+    mode = _savgol_mode(value)
+    return SAVGOL_MODE_NAMES[mode]
 
 
 def _component_values(step: dict[str, Any]) -> list[int]:

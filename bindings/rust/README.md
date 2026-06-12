@@ -6,3 +6,5 @@ FFI-backed engines without moving their implementation into this repository.
 The portable KS/SNV/Savitzky-Golay/PLS subset is exposed through
 `run_portable_pipeline_with_library()`, which loads a caller-supplied `libn4m`
 and delegates split, preprocessing, and PLS calls to `nirs4all-methods`.
+Savitzky-Golay defaults to `mode="interp"` for full nirs4all parity and
+preserves explicit methods-backed modes plus `cval`.

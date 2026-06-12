@@ -74,6 +74,12 @@ within the declared tolerances. The WASM gate also reuses the serialized
 selected model through `predictPortablePipeline()` and checks that predictions
 on the held-out rows match the selected run output.
 
+The shared parser contract also has regression coverage for Savitzky-Golay
+defaults and explicit boundary modes. `mode` defaults to `interp` to match full
+Python nirs4all, while explicit methods-backed SciPy modes (`mirror`,
+`constant`, `nearest`, `wrap`, `interp`) and `cval` are preserved across Python,
+Rust, JavaScript/WASM, R, and MATLAB/Octave.
+
 Regenerate the oracle from a workspace that has full Python `nirs4all`
 installed:
 

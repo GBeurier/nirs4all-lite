@@ -14,6 +14,12 @@ Every binding must:
   execution path can actually plan or call them;
 - participate in parity checks before release.
 
+For the portable Savitzky-Golay operator, every binding normalizes the same
+methods-backed SciPy boundary-mode contract: `mirror=0`, `constant=1`,
+`nearest=2`, `wrap=3`, and `interp=4`. The default remains `interp` to match
+the full Python nirs4all operator; explicit `mode` and `cval` values must be
+preserved in the execution plan and forwarded to the upstream binding.
+
 ## Python
 
 - Distribution name: `nirs4all-lite`.

@@ -30,12 +30,13 @@ for idx = 1:numel(plan.preprocessing)
         Xtest = pls4all.snv_transform(Xtest);
     elseif strcmp(step.type, 'SavitzkyGolay')
         params = step.params;
+        mode = modeFromInt(params(4));
         Xtrain = pls4all.savgol_transform( ...
             Xtrain, 'window_length', params(1), 'polyorder', params(2), ...
-            'deriv', params(3), 'delta', 1.0, 'mode', 'interp', 'cval', params(5));
+            'deriv', params(3), 'delta', 1.0, 'mode', mode, 'cval', params(5));
         Xtest = pls4all.savgol_transform( ...
             Xtest, 'window_length', params(1), 'polyorder', params(2), ...
-            'deriv', params(3), 'delta', 1.0, 'mode', 'interp', 'cval', params(5));
+            'deriv', params(3), 'delta', 1.0, 'mode', mode, 'cval', params(5));
     else
         error('nirs4all:UnsupportedStep', ...
             'Unsupported portable preprocessing step: %s', step.type);
@@ -206,9 +207,44 @@ params = [ ...
     double(windowLength), ...
     double(getFieldOrDefault(input, 'polyorder', 3)), ...
     double(getFieldOrDefault(input, 'deriv', 0)), ...
-    4, ...
+    double(modeToInt(getFieldOrDefault(input, 'mode', 'interp'))), ...
     double(getFieldOrDefault(input, 'cval', 0.0)) ...
 ];
+end
+
+function value = modeToInt(mode)
+if isstring(mode)
+    mode = char(mode);
+end
+if ischar(mode)
+    switch lower(mode)
+        case 'mirror'
+            value = 0;
+        case 'constant'
+            value = 1;
+        case 'nearest'
+            value = 2;
+        case 'wrap'
+            value = 3;
+        case 'interp'
+            value = 4;
+        otherwise
+            error('nirs4all:UnsupportedOperator', ...
+                'Unsupported Savitzky-Golay mode: %s', mode);
+    end
+    return
+end
+value = double(mode);
+if value < 0 || value > 4 || value ~= fix(value)
+    error('nirs4all:UnsupportedOperator', ...
+        'Unsupported Savitzky-Golay mode: %g', value);
+end
+end
+
+function mode = modeFromInt(value)
+modes = {'mirror', 'constant', 'nearest', 'wrap', 'interp'};
+value = modeToInt(value);
+mode = modes{value + 1};
 end
 
 function values = componentValues(step)

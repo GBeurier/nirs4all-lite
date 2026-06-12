@@ -22,6 +22,10 @@ MEX shims.
 flat. JSON-decoded numeric matrices and nested numeric cells are accepted so the
 same oracle fixtures work in MATLAB and Octave.
 
+Savitzky-Golay defaults to `mode = 'interp'` for full nirs4all parity and
+preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
+`wrap`, `interp`) plus `cval`.
+
 ## Requirements
 
 Build and put the `nirs4all-methods` MATLAB/Octave binding on the path first:

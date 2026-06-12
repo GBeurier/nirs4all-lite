@@ -41,6 +41,15 @@ stopifnot(isTRUE(all.equal(
   c(11, 3, 0, 4, 0)
 )))
 
+savgol_mode_plan <- nirs4all::nirs4all_parse_execution_plan(list(pipeline = list(
+  list(class = "nirs4all.operators.transforms.SavitzkyGolay", params = list(window_length = 11L, mode = "constant", cval = 7.25)),
+  list(model = list(class = "sklearn.cross_decomposition.PLSRegression", params = list(n_components = 2L)))
+)))
+stopifnot(isTRUE(all.equal(
+  as.numeric(unlist(savgol_mode_plan$preprocessing[[1L]]$params, use.names = FALSE)),
+  c(11, 3, 0, 1, 7.25)
+)))
+
 from_steps <- nirs4all::nirs4all_load_pipeline(list(steps = json_pipeline$pipeline))
 from_list <- nirs4all::nirs4all_load_pipeline(json_pipeline$pipeline)
 stopifnot(isTRUE(all.equal(from_steps$pipeline, json_pipeline$pipeline, check.attributes = FALSE)))

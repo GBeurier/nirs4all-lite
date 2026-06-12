@@ -18,6 +18,10 @@ portable JSON/YAML subset through the `nirs4all-methods` Python bindings:
 - `sklearn.cross_decomposition.PLSRegression`
 - `_range_` sweeps over `n_components`
 
+Savitzky-Golay defaults to `mode="interp"` for full Python nirs4all parity and
+preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
+`wrap`, `interp`) plus `cval`.
+
 The aggregate does not implement numerical kernels. Install the optional
 methods extra, or make `n4m` and `pls4all` importable, before calling it:
 

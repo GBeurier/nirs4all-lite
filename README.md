@@ -56,6 +56,9 @@ The lightweight parser accepts the same definition envelope as the full Python
 current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
 Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
+Savitzky-Golay keeps the full Python nirs4all default boundary behavior
+(`mode: "interp"`) and also preserves explicit methods-backed SciPy modes
+(`mirror`, `constant`, `nearest`, `wrap`, `interp`) plus `cval`.
 
 JavaScript/WASM, Python, Rust, R, and MATLAB/Octave execute the initial portable
 subset through `nirs4all-methods` and compare the same four JSON/YAML fixtures

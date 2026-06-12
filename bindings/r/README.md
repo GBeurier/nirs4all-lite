@@ -9,3 +9,5 @@ The portable execution gate is available as
 `nirs4all_run_portable_pipeline()`. It delegates Kennard-Stone, SNV,
 Savitzky-Golay, and PLS to the installed `n4m` methods binding and is validated
 against the same full Python `nirs4all` oracle as the Python and WASM bindings.
+Savitzky-Golay defaults to `mode = "interp"` for full nirs4all parity and
+preserves explicit methods-backed modes plus `cval`.
