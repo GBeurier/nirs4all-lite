@@ -1,7 +1,7 @@
 PYTHON ?= python3
 DIST_DIR ?= dist
 
-.PHONY: test test-rust test-python test-wasm test-r check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-rust test-python test-python-parity test-wasm test-r check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
@@ -12,6 +12,9 @@ test-rust:
 
 test-python:
 	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest discover -s bindings/python/tests
+
+test-python-parity:
+	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
 
 test-wasm:
 	npm ci --prefix bindings/wasm

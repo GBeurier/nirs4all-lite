@@ -1,5 +1,6 @@
 """Python surface for the nirs4all-lite aggregate distribution."""
 
+from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,
     PipelineDefinition,
@@ -26,6 +27,7 @@ methods = LazyUpstream("methods")
 __all__ = [
     "LazyUpstream",
     "PORTABLE_OPERATOR_CLASSES",
+    "PortableDataset",
     "PipelineDefinition",
     "Upstream",
     "available_upstreams",
@@ -37,8 +39,10 @@ __all__ = [
     "io",
     "load_pipeline_definition",
     "methods",
+    "parse_execution_plan",
     "portable_class_names",
     "require_upstream",
+    "run_portable_pipeline",
     "upstream_status",
     "upstreams",
 ]

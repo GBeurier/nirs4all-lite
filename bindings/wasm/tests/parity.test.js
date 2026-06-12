@@ -1,10 +1,21 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 
 import { runPortablePipeline } from '../src/index.js';
 
-const methodsUrl = new URL('../../../../nirs4all-methods/bindings/js/dist/index.js', import.meta.url);
+function resolveMethodsUrl() {
+  const override = process.env.NIRS4ALL_METHODS_JS_DIST;
+  if (override) {
+    const target = resolve(override);
+    return pathToFileURL(target.endsWith('.js') ? target : join(target, 'index.js'));
+  }
+  return new URL('../../../../nirs4all-methods/bindings/js/dist/index.js', import.meta.url);
+}
+
+const methodsUrl = resolveMethodsUrl();
 const oracleUrl = new URL('../../../tests/parity/expected/portable_python_oracle.json', import.meta.url);
 const fixtureDir = new URL('../../../tests/parity/fixtures/', import.meta.url);
 
@@ -19,6 +30,9 @@ function maxAbsDiff(actual, expected) {
 
 test('portable WASM execution matches the full Python nirs4all oracle', async (t) => {
   if (!existsSync(methodsUrl)) {
+    if (process.env.NIRS4ALL_LITE_REQUIRE_METHODS_PARITY === '1') {
+      throw new Error(`Required nirs4all-methods JS/WASM build is not available at ${methodsUrl.href}`);
+    }
     t.skip('local nirs4all-methods JS/WASM build is not available');
     return;
   }

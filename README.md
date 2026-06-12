@@ -53,13 +53,16 @@ unavailable instead of shipping a fake local implementation. See
 The lightweight parser accepts the same definition envelope as the full Python
 `nirs4all.pipeline.PipelineConfigs`: a direct list of steps, a mapping with
 `pipeline`, a mapping with `steps`, a JSON/YAML path, or JSON/YAML text. The
-current portable fixture uses the nirs4all examples syntax for Kennard-Stone,
+current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
 Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
 
-This is a syntax contract only. Numerical execution and lite-vs-full-`nirs4all`
-equivalence still require the parity gates described in
-[`docs/PARITY.md`](docs/PARITY.md).
+JavaScript/WASM and Python also execute the initial portable subset through
+`nirs4all-methods` and compare the same four JSON/YAML fixtures against the
+full Python `nirs4all` oracle. Other host bindings must not fake execution:
+until their upstream method surface can execute KS/SNV/SavGol/PLS natively,
+they remain parser/registry bindings and the gap is tracked in the parity plan.
+See [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Repository layout
 
@@ -90,6 +93,16 @@ make test
 cargo test --workspace
 PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
 npm test --prefix bindings/wasm
+```
+
+Strict Python-vs-full-`nirs4all` execution parity needs local
+`nirs4all-methods` Python bindings and libn4m:
+
+```bash
+PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
+PLS4ALL_LIB_PATH=/path/to/libn4m.so \
+NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+python -m unittest bindings/python/tests/test_execution_parity.py -v
 ```
 
 `make build` produces the language artifacts when the required toolchains are

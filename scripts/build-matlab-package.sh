@@ -7,6 +7,10 @@ version="${version:-0.0.0}"
 archive="nirs4all-matlab-octave-${version}.zip"
 
 mkdir -p "$out_dir"
+case "$out_dir" in
+  /*) archive_path="$out_dir/$archive" ;;
+  *) archive_path="$PWD/$out_dir/$archive" ;;
+esac
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
@@ -15,5 +19,5 @@ cp -R bindings/matlab/+nirs4all "$tmp_dir/nirs4all/"
 cp bindings/matlab/README.md "$tmp_dir/nirs4all/"
 cp bindings/matlab/LICENSE "$tmp_dir/nirs4all/"
 
-(cd "$tmp_dir" && zip -qr "$OLDPWD/$out_dir/$archive" nirs4all)
-echo "$out_dir/$archive"
+(cd "$tmp_dir" && zip -qr "$archive_path" nirs4all)
+echo "$archive_path"
