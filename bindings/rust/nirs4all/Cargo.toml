@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.0.0"
+version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -11,6 +11,15 @@ include = ["Cargo.toml", "README.md", "src/**/*.rs"]
 
 [lib]
 path = "src/lib.rs"
+
+[features]
+# The bundled aggregate is methods + formats + io (+ dag-ml). nirs4all-datasets
+# stays EXTERNAL/OPTIONAL to avoid bloat: it is exposed behind this OFF-by-default
+# feature. Enabling it only un-gates the `datasets` upstream surface in this
+# crate; it pulls in NO extra compiled dependency (the Rust binding delegates to
+# the datasets host at runtime, it never vendors the datasets crate).
+default = []
+datasets = []
 
 [dependencies]
 libloading = "0.8"

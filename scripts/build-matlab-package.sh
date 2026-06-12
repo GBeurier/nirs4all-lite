@@ -2,7 +2,9 @@
 set -euo pipefail
 
 out_dir="${1:-dist/matlab}"
-version="$(sed -n 's/^version = \"\\(.*\\)\"/\\1/p' bindings/rust/nirs4all/Cargo.toml | head -1)"
+# Version source of truth: the Rust crate [package] version (kept in sync across
+# bindings by scripts/bump_version.sh).
+version="$(sed -nE '/^\[package\]/,/^\[/{s/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p}' bindings/rust/nirs4all/Cargo.toml | head -1)"
 version="${version:-0.0.0}"
 archive="nirs4all-matlab-octave-${version}.zip"
 
