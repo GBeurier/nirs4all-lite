@@ -418,6 +418,13 @@ pub mod dag_ml_data {
     pub const UPSTREAM_KEY: &str = "dag_ml_data";
 }
 
+/// Optional `nirs4all-datasets` surface.
+///
+/// nirs4all-datasets is kept EXTERNAL/OPTIONAL (to avoid bloat), so this
+/// convenience module is gated behind the off-by-default `datasets` Cargo
+/// feature. The bundled aggregate is methods + formats + io (+ dag-ml); the
+/// datasets host is delegated to at runtime and never vendored.
+#[cfg(feature = "datasets")]
 pub mod datasets {
     pub const UPSTREAM_KEY: &str = "datasets";
 }
