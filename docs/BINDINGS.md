@@ -68,6 +68,7 @@ Every binding must:
   `fit`/`predict`/`transform`-style methods when execution support exists.
 - Keep Octave compatibility in the public subset unless a function is marked
   MATLAB-only.
-- Current MATLAB/Octave support is parser/registry only for the portable
-  KS/SNV/Savitzky-Golay/PLS subset; it must not claim execution parity until
-  those upstream method calls are exposed without reimplementing kernels.
+- The portable KS/SNV/Savitzky-Golay/PLS subset executes through
+  `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
+  `+pls4all` MEX shims. The aggregate binding still owns only parsing,
+  orchestration, and result-shape translation.

@@ -1,7 +1,13 @@
 PYTHON ?= python3
 DIST_DIR ?= dist
+NIRS4ALL_METHODS_ROOT ?= $(if $(wildcard nirs4all-methods),$(abspath nirs4all-methods),$(abspath ../nirs4all-methods))
+NIRS4ALL_METHODS_R_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/r/n4m
+NIRS4ALL_METHODS_LIB_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/cpp/src
+NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/generated
+NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
+R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
-.PHONY: test test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
@@ -30,10 +36,27 @@ test-r-fixtures:
 	diff -ru tests/parity/fixtures bindings/r/inst/extdata
 
 test-r-parity: test-r-fixtures
+	mkdir -p $(R_PARITY_LIB)
+	if [ -d "$(NIRS4ALL_METHODS_R_PATH)" ]; then \
+		PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
+		PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
+		LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
+		R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
+		R CMD INSTALL --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"; \
+	fi
+	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
 	Rscript bindings/r/tests/parity.R
+
+test-matlab-parity:
+	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
+	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath tests/parity/fixtures) \
+	NIRS4ALL_METHODS_MATLAB_PATH=$(NIRS4ALL_METHODS_MATLAB_PATH) \
+	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+	octave --quiet --eval "addpath('bindings/matlab/tests'); parity"
 
 check-r: build-r
 	R CMD check --no-manual $(DIST_DIR)/r/nirs4all_*.tar.gz

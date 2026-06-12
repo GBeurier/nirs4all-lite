@@ -57,15 +57,14 @@ current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
 Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
 
-JavaScript/WASM, Python, Rust, and R also execute the initial portable subset
-through `nirs4all-methods` and compare the same four JSON/YAML fixtures against
-the full Python `nirs4all` oracle. The JavaScript/WASM binding additionally
-returns a serialized PLS model and exposes `predictPortablePipeline()` so
-browser clients can reuse the selected portable pipeline without reimplementing
-the preprocessing or prediction path. MATLAB/Octave must not fake execution:
-until its upstream method surface can execute KS/SNV/SavGol/PLS natively, it
-remains a parser/registry binding and the gap is tracked in the parity plan. See
-[`docs/PARITY.md`](docs/PARITY.md).
+JavaScript/WASM, Python, Rust, R, and MATLAB/Octave execute the initial portable
+subset through `nirs4all-methods` and compare the same four JSON/YAML fixtures
+against the full Python `nirs4all` oracle. The JavaScript/WASM binding
+additionally returns a serialized PLS model and exposes
+`predictPortablePipeline()` so browser clients can reuse the selected portable
+pipeline without reimplementing the preprocessing or prediction path. The
+MATLAB/Octave execution path delegates to the upstream `+pls4all` MEX shims and
+is strict-parity gated in CI. See [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Repository layout
 
@@ -75,7 +74,7 @@ bindings/
   rust/        # Rust crate: nirs4all
   wasm/        # npm/WASM package: nirs4all
   r/           # R package skeleton: nirs4all
-  matlab/      # MATLAB/Octave namespace skeleton
+  matlab/      # MATLAB/Octave namespace and portable execution facade
 compat/        # Upstream registry and compatibility metadata
 docs/          # Architecture, binding, parity, and release contracts
 tests/parity/  # Cross-runtime parity fixture plan
@@ -122,6 +121,13 @@ with the portable preprocessing and splitter surface:
 
 ```bash
 make test-r-parity
+```
+
+Strict MATLAB/Octave-vs-full-`nirs4all` execution parity needs the
+`nirs4all-methods` `+pls4all` MEX shims on the Octave/MATLAB path:
+
+```bash
+make test-matlab-parity
 ```
 
 `make build` produces the language artifacts when the required toolchains are

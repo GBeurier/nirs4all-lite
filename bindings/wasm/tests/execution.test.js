@@ -56,6 +56,22 @@ test('portable execution plan recognizes the shared nirs4all fixture', () => {
   assert.deepEqual(plan.nComponents, [2, 4, 6, 8, 10]);
 });
 
+test('portable execution plan keeps nirs4all Savitzky-Golay defaults', () => {
+  const plan = parseExecutionPlan({
+    pipeline: [
+      { class: 'nirs4all.operators.transforms.SavitzkyGolay', params: { window_length: 11 } },
+      {
+        model: {
+          class: 'sklearn.cross_decomposition.PLSRegression',
+          params: { n_components: 2 },
+        },
+      },
+    ],
+  });
+
+  assert.deepEqual(plan.preprocessing[0].params, [11, 3, 0, 4, 0]);
+});
+
 test('portable WASM execution delegates the shared pipeline to nirs4all-methods', async (t) => {
   if (!existsSync(methodsUrl)) {
     t.skip('local nirs4all-methods JS/WASM build is not available');

@@ -247,7 +247,7 @@ def _savgol_params(params: dict[str, Any]) -> list[float | int]:
         raise ValueError("Portable Savitzky-Golay execution currently supports delta=1 only.")
     return [
         int(params.get("window_length", params.get("window", 11))),
-        int(params.get("polyorder", 2)),
+        int(params.get("polyorder", 3)),
         int(params.get("deriv", 0)),
         4,
         float(params.get("cval", 0.0)),

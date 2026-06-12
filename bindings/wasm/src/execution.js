@@ -286,7 +286,7 @@ function savgolParams(params) {
   }
   return [
     numberParam(params.window_length ?? params.window, 11),
-    numberParam(params.polyorder, 2),
+    numberParam(params.polyorder, 3),
     numberParam(params.deriv, 0),
     // scipy.signal.savgol_filter, and therefore nirs4all Python, default to interp.
     4,

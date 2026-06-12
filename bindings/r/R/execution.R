@@ -227,7 +227,7 @@ savgol_params <- function(params) {
   }
   list(
     as.integer(params$window_length %||% params$window %||% 11L),
-    as.integer(params$polyorder %||% 2L),
+    as.integer(params$polyorder %||% 3L),
     as.integer(params$deriv %||% 0L),
     4L,
     as.numeric(params$cval %||% 0.0)

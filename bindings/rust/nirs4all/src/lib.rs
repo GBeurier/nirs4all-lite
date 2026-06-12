@@ -513,7 +513,7 @@ fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
             params.get("window_length").or_else(|| params.get("window")),
             11,
         )?,
-        polyorder: int_param(params.get("polyorder"), 2)?,
+        polyorder: int_param(params.get("polyorder"), 3)?,
         deriv: int_param(params.get("deriv"), 0)?,
         mode: 4,
         cval: number_param(params.get("cval"), 0.0)?,
@@ -1114,6 +1114,36 @@ mod tests {
         assert_eq!(
             json_pipeline["pipeline"][3]["_range_"],
             serde_json::json!([2, 11, 2])
+        );
+    }
+
+    #[test]
+    fn savgol_default_polyorder_matches_full_python_nirs4all() {
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "class": "nirs4all.operators.transforms.SavitzkyGolay",
+                    "params": { "window_length": 11 }
+                },
+                {
+                    "model": {
+                        "class": "sklearn.cross_decomposition.PLSRegression",
+                        "params": { "n_components": 2 }
+                    }
+                }
+            ]
+        });
+        let plan = parse_execution_plan(&definition).unwrap();
+
+        assert_eq!(
+            plan.preprocessing,
+            vec![PortablePreprocessing::SavitzkyGolay(SavitzkyGolayParams {
+                window_length: 11,
+                polyorder: 3,
+                deriv: 0,
+                mode: 4,
+                cval: 0.0,
+            })]
         );
     }
 
