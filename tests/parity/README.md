@@ -12,6 +12,24 @@ The initial shared cases are:
 - Kennard-Stone + SNV + Savitzky-Golay + PLS `n_components` sweep via
   `_range_` / `param`.
 
+`expected/portable_python_oracle.json` is generated from the full Python
+`nirs4all` library and is the source of truth for the WASM execution parity
+test in `bindings/wasm/tests/parity.test.js`.
+
+Regenerate it with:
+
+```bash
+PYTHONPATH=/home/delete/nirs4all/nirs4all \
+  /home/delete/nirs4all/nirs4all/.venv/bin/python \
+  scripts/parity/generate_python_oracle.py
+```
+
+Then run:
+
+```bash
+npm test --prefix bindings/wasm
+```
+
 Each fixture should include:
 
 - input data or a DOI/catalog reference;
