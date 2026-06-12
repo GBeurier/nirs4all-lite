@@ -42,7 +42,7 @@ repo = "GBeurier/nirs4all-datasets"
 role = "DOI-pinned NIRS dataset catalog"
 bindings = ["rust", "python", "wasm", "c"]
 python_imports = ["nirs4all_datasets", "nirs4all.datasets"]
-wasm_packages = ["nirs4all-datasets-wasm"]
+wasm_packages = ["@nirs4all/datasets-wasm"]
 
 [[upstream]]
 key = "methods"
