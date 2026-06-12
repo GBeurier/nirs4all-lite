@@ -1,0 +1,74 @@
+# MATLAB / Octave binding package for every release tag.
+#
+# The bindings/matlab tree (the +nirs4all classdef package + the portable
+# execution facade + smoke test) is a SOURCE distribution: the SAME archive
+# serves MATLAB and Octave. scripts/build-matlab-package.sh assembles it as
+# nirs4all-matlab-octave-<version>.zip (version read from the Rust-crate SoT).
+# It is attached to the GitHub Release so users can download it without cloning.
+#
+# Naming: the package is `nirs4all` (there is no "full" nirs4all in MATLAB/
+# Octave, so the lite aggregate IS the `nirs4all` package here).
+#
+# Trigger: tag push v*.*.* (attach gated on a non-pre-release tag), or
+# workflow_dispatch for a dry run (build the artifact, no Release upload).
+name: release-matlab
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write   # attach the asset to the Release
+
+jobs:
+  matlab-package:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Octave (smoke test the package surface)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave zip
+
+      - name: Octave smoke test
+        run: octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
+
+      - name: Resolve version
+        id: meta
+        run: |
+          set -euo pipefail
+          # Single source of truth: the Rust crate [package] version (the same
+          # value scripts/build-matlab-package.sh reads).
+          VER=$(sed -nE '/^\[package\]/,/^\[/{s/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p}' \
+                bindings/rust/nirs4all/Cargo.toml | head -n1)
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          echo "archive=nirs4all-matlab-octave-$VER.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Validate tag matches the resolved version
+        if: ${{ github.event_name == 'push' && !contains(github.ref_name, '-') }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.meta.outputs.ver }}" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "::error::version (${{ steps.meta.outputs.ver }}) != tag (${GITHUB_REF_NAME#v}). Run scripts/bump_version.sh and re-tag."
+            exit 1
+          fi
+
+      - name: Build the MATLAB/Octave package
+        run: scripts/build-matlab-package.sh dist/matlab
+
+      - name: Upload to the matching Release
+        if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/matlab/${{ steps.meta.outputs.archive }}
+          fail_on_unmatched_files: true
+
+      - name: Upload artifact (always, for dry runs / inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.archive }}
+          path: dist/matlab/

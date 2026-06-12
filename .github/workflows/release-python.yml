@@ -1,0 +1,118 @@
+# Build the pure-Python nirs4all-lite wheel + sdist and (on a non-pre-release
+# tag) publish to PyPI via OIDC Trusted Publishing.
+#
+# nirs4all-lite's Python distribution is PURE PYTHON (hatchling backend, no
+# compiled extension): a single `py3-none-any` wheel + sdist build on Linux
+# serves every OS/arch. There is therefore no per-OS wheel matrix here (unlike
+# nirs4all-io / nirs4all-methods whose wheels carry a native libn4m / Rust core).
+#
+# PyPI name is `nirs4all-lite` (NOT `nirs4all`): the `nirs4all` PyPI project is
+# the FULL Python library, so the lightweight aggregate ships under its own
+# distribution name. The import name stays `nirs4all_lite`.
+#
+# Publishing uses GitHub OIDC Trusted Publishing (id-token: write) through the
+# `pypi` GitHub environment — NO API token. The maintainer must create the
+# Trusted Publisher on pypi.org for project `nirs4all-lite` with:
+#   owner = GBeurier, repo = nirs4all-lite,
+#   workflow = release-python.yml, environment = pypi
+# (the SAME convention as nirs4all-formats / nirs4all-io / nirs4all-methods).
+#
+# Triggers
+# --------
+# - push tag v*.*.*  -> build + (non-pre-release) publish to PyPI
+# - workflow_dispatch (dry_run input) -> build only, never publishes
+name: release-python
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build artifacts without publishing"
+        required: false
+        default: "true"
+  push:
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build wheel + sdist (pure Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build twine
+      - name: Build wheel + sdist
+        run: python -m build bindings/python --outdir dist
+      - name: twine check
+        run: python -m twine check dist/*
+      - name: Validate tag matches the built version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          # The tag minus the leading 'v' must equal the PEP 440 version baked
+          # into the wheel + sdist. PEP 440 alpha/beta/rc spellings (0.1.0a1,
+          # 0.1.0b2, 0.1.0rc1) are allowed; the publish step below only fires
+          # for non-pre-release tags. scripts/bump_version.sh keeps the version
+          # in sync with the Rust-crate SoT.
+          tag_version="${GITHUB_REF_NAME#v}"
+          dist_file=$(ls dist/nirs4all_lite-*.whl 2>/dev/null | head -n1 || true)
+          if [[ -z "${dist_file}" ]]; then
+            echo "::error::no nirs4all_lite wheel found in dist/ to validate" >&2
+            ls -la dist/ >&2 || true
+            exit 1
+          fi
+          base=$(basename "${dist_file}")
+          rest="${base#nirs4all_lite-}"
+          dist_version="${rest%%-*}"        # nirs4all_lite-0.1.0-py3-... -> 0.1.0
+          if [[ "${tag_version}" != "${dist_version}" ]]; then
+            echo "::error::Tag version (${tag_version}) != built package version (${dist_version}). Run scripts/bump_version.sh and re-tag." >&2
+            exit 1
+          fi
+          echo "tag ${GITHUB_REF_NAME} matches built package version ${dist_version}."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+          if-no-files-found: error
+
+  publish-pypi:
+    name: Publish to PyPI (OIDC)
+    needs: build
+    runs-on: ubuntu-latest
+    # Production tags only. Pre-release tags (anything containing '-', e.g.
+    # v0.1.0-alpha.1) are excluded so they never reach PyPI; and never on a
+    # workflow_dispatch dry run — only a real tag push publishes. Mirrors the
+    # nirs4all-io / nirs4all-formats / nirs4all-methods convention.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && github.event_name != 'workflow_dispatch' }}
+    # Use the `pypi` GitHub environment so the OIDC token carries an
+    # `environment: pypi` claim, matching the Trusted Publisher on pypi.org.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/nirs4all-lite
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist
+      - name: Validate tag is a production release version (vX.Y.Z)
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ ! "${tag_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} is not a production release version (vX.Y.Z); pre-releases are not auto-published to PyPI" >&2
+            exit 1
+          fi
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

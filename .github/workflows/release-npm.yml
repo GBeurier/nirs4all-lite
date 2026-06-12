@@ -1,0 +1,109 @@
+# Build, smoke-test, and publish the `nirs4all` npm package.
+#
+# nirs4all-lite's JS/WASM binding (bindings/wasm) is PURE JavaScript: a small
+# ES-module surface + .d.ts that loads the upstream @nirs4all/* WASM packages
+# as OPTIONAL peer dependencies. There is no wasm-pack / Rust build here (unlike
+# nirs4all-io / nirs4all-methods), so we publish the source tree directly.
+#
+# npm package name is `nirs4all` (there is no "full" nirs4all on npm, so the
+# lite aggregate IS the `nirs4all` umbrella in JS). nirs4all-datasets stays
+# OPTIONAL: it is declared only under peerDependenciesMeta (optional), never a
+# hard dependency.
+#
+# Publishing needs the NPM_TOKEN repository secret (an automation token that can
+# publish the `nirs4all` package; the name must be free / owned by the
+# maintainer). Provenance (publishConfig.provenance, injected below) needs the
+# id-token: write permission and a public repo.
+#
+# Triggers
+# --------
+# - push tag v*.*.*  -> build + smoke + (non-pre-release) publish to npm
+# - workflow_dispatch (publish input) -> build + smoke + (publish=true) publish
+name: release-npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to npm (true) or dry-run only (false)'
+        type: boolean
+        default: false
+  push:
+    # GitHub tag filters are globs, not regex; '-rc'/pre-release tags still
+    # match here and are filtered out of the publish step below.
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write   # npm provenance (OIDC)
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install + test the package
+        run: |
+          npm ci --prefix bindings/wasm
+          npm test --prefix bindings/wasm
+
+      - name: Inject npm provenance into package.json
+        working-directory: bindings/wasm
+        # The committed package.json has no publishConfig; add public access +
+        # OIDC provenance for the published artifact (does not change the source
+        # tree's behavior — it is only read by `npm publish`).
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            p.publishConfig = Object.assign({}, p.publishConfig, { access: "public", provenance: true });
+            fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
+            console.log("package.json ->", p.name, p.version);
+          '
+
+      - name: npm pack --dry-run (confirm src + d.ts ship)
+        working-directory: bindings/wasm
+        run: npm pack --dry-run
+
+      - name: Validate tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: bindings/wasm
+        run: |
+          set -euo pipefail
+          PKG_VER=$(node -p "require('./package.json').version")
+          echo "package.json=$PKG_VER  tag=$GITHUB_REF_NAME"
+          if [ "$PKG_VER" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "ERROR: package.json version ($PKG_VER) != tag (${GITHUB_REF_NAME#v}). Run scripts/bump_version.sh and re-tag."
+            exit 1
+          fi
+
+      - name: Decide publish
+        id: gate
+        run: |
+          # Publish on a non-pre-release tag push, OR on workflow_dispatch with
+          # publish=true. Pre-release tags (containing '-') never publish.
+          if [ "${{ github.event_name }}" = "push" ] && [[ "${GITHUB_REF_NAME}" == v* ]] && [[ "${GITHUB_REF_NAME}" != *-* ]]; then
+            echo "do=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publish }}" = "true" ]; then
+            echo "do=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "do=false" >> "$GITHUB_OUTPUT"
+            echo "Dry-run only (no publish)."
+          fi
+
+      - name: Publish to npm (provenance)
+        if: steps.gate.outputs.do == 'true'
+        working-directory: bindings/wasm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

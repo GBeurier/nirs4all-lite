@@ -1,0 +1,160 @@
+# Build, R CMD check --as-cran, and (on a release tag) attach the `nirs4all` R
+# source tarball to the GitHub Release.
+#
+# The nirs4all-lite R binding is PURE R (NeedsCompilation: no): it has no Rust /
+# C shim, so there is NOTHING to vendor or compile (unlike nirs4all-io /
+# nirs4all-methods, whose R packages build a native libn4m / Rust staticlib).
+# The tarball is therefore directly CRAN-submittable on the R side.
+#
+# Naming: the R package is `nirs4all` (there is no "full" nirs4all on CRAN/
+# R-universe, so the lite aggregate IS the `nirs4all` R package).
+#
+# Imports are just jsonlite + yaml. The ecosystem bindings (nirs4allformats,
+# nirs4allio, nirs4alldatasets, n4m, dagmldata) are SUGGESTS only and resolved
+# from the R-universe via DESCRIPTION's Additional_repositories — so
+# nirs4all-datasets (nirs4alldatasets) stays optional, never a hard dependency.
+# Because those upstreams are not on mainstream CRAN yet, the natural release
+# channel is R-universe until they land on CRAN; see bindings/r/cran-comments.md.
+#
+# CRAN submission itself is the irreducible manual web-form step at
+# https://cran.r-project.org/submit.html — this workflow produces + validates the
+# tarball; the maintainer downloads it from the Release and submits. R-universe
+# builds straight from Git.
+#
+# Triggers
+# --------
+# - workflow_dispatch  -> on-demand R CMD check + tarball build.
+# - push tag v[0-9]*.[0-9]*.[0-9]* -> check -> build-tarball -> attach to the
+#   matching Release (gated on a non-pre-release tag).
+name: release-r
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: R CMD check / ${{ matrix.cfg.label }}
+    runs-on: ${{ matrix.cfg.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - label: linux-release
+            runs_on: ubuntu-22.04
+            r_version: "release"
+          - label: macos-arm64-release
+            runs_on: macos-14
+            r_version: "release"
+          - label: windows-release
+            runs_on: windows-2022
+            r_version: "release"
+    env:
+      R_KEEP_PKG_SOURCE: yes
+      # The Suggests (ecosystem bindings) live on the R-universe, not mainstream
+      # CRAN; install the ones that exist there but do not fail the check when an
+      # upstream is not yet published — they are optional, exercised via
+      # requireNamespace().
+      _R_CHECK_FORCE_SUGGESTS_: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.cfg.r_version }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: bindings/r
+          extra-packages: |
+            any::rcmdcheck
+            any::jsonlite
+            any::yaml
+
+      - name: R CMD check --as-cran
+        uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: bindings/r
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"error"'
+          upload-snapshots: true
+
+      - name: Upload check artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rcheck-${{ matrix.cfg.label }}
+          path: bindings/r.Rcheck/
+
+  build-tarball:
+    name: Build R source tarball
+    needs: check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Install R Imports (jsonlite, yaml)
+        shell: Rscript {0}
+        run: install.packages(c("jsonlite", "yaml"))
+
+      - name: Validate tag matches the DESCRIPTION version
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          set -euo pipefail
+          DESC_VER=$(sed -nE 's/^Version:[[:space:]]+([0-9.]+).*/\1/p' bindings/r/DESCRIPTION | head -n1)
+          echo "DESCRIPTION=$DESC_VER  tag=$GITHUB_REF_NAME"
+          # A final release tag (vX.Y.Z) must match the DESCRIPTION Version. R
+          # uses an X.Y.Z.9000 spelling for pre-releases, which are not attached
+          # below, so only the production-tag case is enforced here.
+          if [[ "${GITHUB_REF_NAME}" != *-* ]] && [ "$DESC_VER" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "::error::DESCRIPTION Version ($DESC_VER) != tag (${GITHUB_REF_NAME#v}). Run scripts/bump_version.sh and re-tag."
+            exit 1
+          fi
+
+      - name: R CMD build (produces nirs4all_<version>.tar.gz)
+        run: |
+          set -euo pipefail
+          R CMD build bindings/r
+          mkdir -p dist-r
+          mv nirs4all_*.tar.gz dist-r/
+          ls -la dist-r/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nirs4all-r-tarball
+          path: dist-r/nirs4all_*.tar.gz
+          if-no-files-found: error
+          retention-days: 90
+
+  publish-release-asset:
+    name: Attach R tarball to GitHub Release
+    needs: build-tarball
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nirs4all-r-tarball
+          path: dist-r/
+
+      - name: Upload to the matching Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-r/*.tar.gz
+          fail_on_unmatched_files: true
