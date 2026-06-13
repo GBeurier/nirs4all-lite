@@ -136,3 +136,11 @@ make test-matlab-parity
 `make build` produces the language artifacts when the required toolchains are
 installed. R and MATLAB/Octave checks require local R/Octave installations; CI
 also runs those gates.
+
+## License
+
+`nirs4all-lite` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
+with an optional **commercial license** for closed-source / SaaS use. For any commercial use, contact
+<nirs4all-admin@cirad.fr>. As an aggregate it re-exports sibling libraries that carry their own
+licenses (the `dag-ml` / `dag-ml-data` siblings are MIT; the others are CeCILL-2.1 OR AGPL-3.0-or-later).
+See [`LICENSING.md`](LICENSING.md), [`LICENSES/`](LICENSES/), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
