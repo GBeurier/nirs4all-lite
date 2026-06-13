@@ -107,7 +107,7 @@ the "Using Rust" CRAN considerations apply. `R CMD check --as-cran` is clean
 via `Additional_repositories`. Because those upstreams are not on mainstream
 CRAN yet, the natural channel today is **R-universe**; the tarball is written
 CRAN-submittable for when they land on CRAN. See
-[`bindings/r/cran-comments.md`](../bindings/r/cran-comments.md).
+[`bindings/r/cran-comments.md`](https://github.com/GBeurier/nirs4all-lite/blob/main/bindings/r/cran-comments.md).
 
 `release-r.yml` builds and attaches `nirs4all_<version>.tar.gz` to the Release;
 the maintainer downloads it and submits via CRAN's web form when appropriate.

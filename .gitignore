@@ -8,6 +8,7 @@ target/
 node_modules/
 dist/
 build/
+docs/_build/
 *.egg-info/
 *.Rcheck/
 .r-parity-lib/
