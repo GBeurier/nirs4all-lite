@@ -89,17 +89,31 @@ jobs:
 
       - name: Decide publish
         id: gate
+        working-directory: bindings/wasm
         run: |
+          set -euo pipefail
           # Publish on a non-pre-release tag push, OR on workflow_dispatch with
           # publish=true. Pre-release tags (containing '-') never publish.
           if [ "${{ github.event_name }}" = "push" ] && [[ "${GITHUB_REF_NAME}" == v* ]] && [[ "${GITHUB_REF_NAME}" != *-* ]]; then
-            echo "do=true" >> "$GITHUB_OUTPUT"
+            do=true
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publish }}" = "true" ]; then
-            echo "do=true" >> "$GITHUB_OUTPUT"
+            do=true
           else
-            echo "do=false" >> "$GITHUB_OUTPUT"
+            do=false
             echo "Dry-run only (no publish)."
           fi
+          # Idempotency guard: npm forbids republishing an existing version (E403).
+          # If this exact name@version is already on the registry, skip the publish
+          # so re-running a tag (or a no-op release) succeeds instead of erroring.
+          if [ "$do" = "true" ]; then
+            PKG_NAME=$(node -p "require('./package.json').name")
+            PKG_VER=$(node -p "require('./package.json').version")
+            if npm view "${PKG_NAME}@${PKG_VER}" version >/dev/null 2>&1; then
+              echo "${PKG_NAME}@${PKG_VER} already published; skipping publish."
+              do=false
+            fi
+          fi
+          echo "do=$do" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm (provenance)
         if: steps.gate.outputs.do == 'true'

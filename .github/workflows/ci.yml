@@ -140,7 +140,13 @@ jobs:
       - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), repos = "https://cloud.r-project.org")'
       - run: mkdir -p dist/r
       - run: cd dist/r && R CMD build ../../bindings/r
+      # The ecosystem bindings (nirs4allformats/io/datasets, n4m, dagmldata) are
+      # Suggests served from R-universe (Additional_repositories), not installed
+      # here. _R_CHECK_FORCE_SUGGESTS_=false makes their absence a NOTE rather
+      # than an ERROR, exactly as CRAN does, and matching release-r.yml.
       - run: R CMD check --no-manual dist/r/nirs4all_*.tar.gz
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: "false"
       - uses: actions/upload-artifact@v7
         with:
           name: r-source
