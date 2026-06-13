@@ -411,10 +411,14 @@ pub fn run_portable_pipeline_with_library(
 }
 
 pub mod dag_ml {
+    pub use dag_ml_crate::*;
+
     pub const UPSTREAM_KEY: &str = "dag_ml";
 }
 
 pub mod dag_ml_data {
+    pub use dag_ml_data_crate::*;
+
     pub const UPSTREAM_KEY: &str = "dag_ml_data";
 }
 
