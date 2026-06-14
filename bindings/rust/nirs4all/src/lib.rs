@@ -769,12 +769,12 @@ impl MethodsLibrary {
         };
 
         let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_double) -> N4mStatus> =
-            self.symbol(b"n4m_split_kennard_stone_create")?;
+            self.symbol(b"n4m_model_selection_kennard_stone_create")?;
         let split_fn: Symbol<
             unsafe extern "C" fn(N4mHandle, N4mMatrixView, *mut N4mSplitResult) -> N4mStatus,
-        > = self.symbol(b"n4m_split_kennard_stone_split")?;
+        > = self.symbol(b"n4m_model_selection_kennard_stone_split")?;
         let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
-            self.symbol(b"n4m_split_kennard_stone_destroy")?;
+            self.symbol(b"n4m_model_selection_kennard_stone_destroy")?;
         let result_destroy: Symbol<unsafe extern "C" fn(*mut N4mSplitResult)> =
             self.symbol(b"n4m_split_result_destroy")?;
 
@@ -782,7 +782,7 @@ impl MethodsLibrary {
         unsafe {
             self.check(
                 create(&mut handle, splitter.test_size),
-                "n4m_split_kennard_stone_create",
+                "n4m_model_selection_kennard_stone_create",
                 None,
             )?;
         }
@@ -801,38 +801,45 @@ impl MethodsLibrary {
                 &mut result,
             )
         };
-        let split_result =
-            if let Err(error) = self.check(split_status, "n4m_split_kennard_stone_split", None) {
-                unsafe { destroy(handle) };
-                return Err(error);
-            } else {
-                let train = copy_indices(result.train_idx, result.n_train)?;
-                let test = copy_indices(result.test_idx, result.n_test)?;
-                unsafe {
-                    result_destroy(&mut result);
-                    destroy(handle);
-                }
-                PortableSplitResult {
-                    kind: splitter.kind.clone(),
-                    train_indices: train,
-                    test_indices: test,
-                }
-            };
+        let split_result = if let Err(error) = self.check(
+            split_status,
+            "n4m_model_selection_kennard_stone_split",
+            None,
+        ) {
+            unsafe { destroy(handle) };
+            return Err(error);
+        } else {
+            let train = copy_indices(result.train_idx, result.n_train)?;
+            let test = copy_indices(result.test_idx, result.n_test)?;
+            unsafe {
+                result_destroy(&mut result);
+                destroy(handle);
+            }
+            PortableSplitResult {
+                kind: splitter.kind.clone(),
+                train_indices: train,
+                test_indices: test,
+            }
+        };
         Ok(split_result)
     }
 
     fn snv_transform(&self, input: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, String> {
         let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_int, c_int, c_int) -> N4mStatus> =
-            self.symbol(b"n4m_pp_snv_create")?;
+            self.symbol(b"n4m_transform_snv_create")?;
         let transform: Symbol<
             unsafe extern "C" fn(N4mHandle, N4mMatrixView, N4mMatrixView) -> N4mStatus,
-        > = self.symbol(b"n4m_pp_snv_transform")?;
+        > = self.symbol(b"n4m_transform_snv_transform")?;
         let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
-            self.symbol(b"n4m_pp_snv_destroy")?;
+            self.symbol(b"n4m_transform_snv_destroy")?;
 
         let mut handle = ptr::null_mut();
         unsafe {
-            self.check(create(&mut handle, 1, 1, 0), "n4m_pp_snv_create", None)?;
+            self.check(
+                create(&mut handle, 1, 1, 0),
+                "n4m_transform_snv_create",
+                None,
+            )?;
         }
         let mut x = input.to_vec();
         let mut out = vec![0.0; input.len()];
@@ -844,7 +851,7 @@ impl MethodsLibrary {
             )
         };
         unsafe { destroy(handle) };
-        self.check(status, "n4m_pp_snv_transform", None)?;
+        self.check(status, "n4m_transform_snv_transform", None)?;
         Ok(out)
     }
 
@@ -865,12 +872,12 @@ impl MethodsLibrary {
                 i32,
                 c_double,
             ) -> N4mStatus,
-        > = self.symbol(b"n4m_pp_savgol_create")?;
+        > = self.symbol(b"n4m_transform_savitzky_golay_create")?;
         let transform: Symbol<
             unsafe extern "C" fn(N4mHandle, N4mMatrixView, N4mMatrixView) -> N4mStatus,
-        > = self.symbol(b"n4m_pp_savgol_transform")?;
+        > = self.symbol(b"n4m_transform_savitzky_golay_transform")?;
         let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
-            self.symbol(b"n4m_pp_savgol_destroy")?;
+            self.symbol(b"n4m_transform_savitzky_golay_destroy")?;
 
         let mut handle = ptr::null_mut();
         unsafe {
@@ -884,7 +891,7 @@ impl MethodsLibrary {
                     params.mode,
                     params.cval,
                 ),
-                "n4m_pp_savgol_create",
+                "n4m_transform_savitzky_golay_create",
                 None,
             )?;
         }
@@ -898,7 +905,7 @@ impl MethodsLibrary {
             )
         };
         unsafe { destroy(handle) };
-        self.check(status, "n4m_pp_savgol_transform", None)?;
+        self.check(status, "n4m_transform_savitzky_golay_transform", None)?;
         Ok(out)
     }
 

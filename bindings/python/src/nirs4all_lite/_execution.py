@@ -60,9 +60,9 @@ def run_portable_pipeline(
 
     The aggregate does not implement numerical kernels itself. This function
     translates the shared nirs4all JSON/YAML syntax to the idiomatic Python
-    wrappers exposed by `nirs4all-methods` (`n4m.sklearn` and
-    `pls4all.sklearn`) and returns the same result contract as the npm/WASM
-    binding.
+    wrappers exposed by `nirs4all-methods` (`n4m.transform`,
+    `n4m.model_selection` and `pls4all.sklearn`) and returns the same result
+    contract as the npm/WASM binding.
     """
 
     np, KennardStoneSplitter, SNV, SavitzkyGolay, PLSRegression = _load_methods_surface()
@@ -172,8 +172,9 @@ def parse_execution_plan(
 def _load_methods_surface():
     try:
         import numpy as np
-        from n4m.sklearn.preprocessing import SNV, SavitzkyGolay
-        from n4m.sklearn.splitters import KennardStoneSplitter
+        from n4m.model_selection.splitters import KennardStoneSplitter
+        from n4m.transform.scatter import SNV
+        from n4m.transform.smoothing import SavitzkyGolay
         from pls4all.sklearn import PLSRegression
     except ImportError as exc:  # pragma: no cover - exercised by optional installs
         raise ImportError(
