@@ -39,6 +39,8 @@ dependencies = [
 [[package]]
 name = "dag-ml"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b96e112cac3119689197733d9ac112e440c9635510a1bb38e77ef9b6dd8d245f"
 dependencies = [
  "dag-ml-core",
 ]
@@ -46,6 +48,8 @@ dependencies = [
 [[package]]
 name = "dag-ml-core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56c8caa11878e780e6349fcc247323001bc37636bdc2b5c5c731a0ab9cfbeb4d"
 dependencies = [
  "indexmap",
  "serde",
@@ -59,6 +63,8 @@ dependencies = [
 [[package]]
 name = "dag-ml-data"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0d09af2cba3d5fba7572ec038bdffa6f7a3783f8678e66fea288a9e70833a04"
 dependencies = [
  "dag-ml-data-core",
 ]
@@ -66,6 +72,8 @@ dependencies = [
 [[package]]
 name = "dag-ml-data-core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7065638e8992195f41472f61f5186964d35938091795e44f9d99ef49d3c5d91e"
 dependencies = [
  "serde",
  "serde_json",
