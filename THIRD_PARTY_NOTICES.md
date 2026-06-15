@@ -22,6 +22,6 @@ cargo tree
 cargo deny check licenses
 ```
 
-> Note: the re-exported `dag-ml` and `dag-ml-data` siblings are MIT-licensed; the other siblings are `CeCILL-2.1 OR AGPL-3.0-or-later`.
+> Note: the re-exported siblings currently use `CeCILL-2.1 OR AGPL-3.0-or-later`.
 
 License-family texts are bundled under [`LICENSES/`](LICENSES/): MIT, Apache-2.0, BSD-3-Clause.
