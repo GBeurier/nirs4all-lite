@@ -33,6 +33,12 @@ surface, native bindings, release glue, and parity checks.
 Python keeps the `nirs4all-lite` distribution name to avoid colliding with the
 full Python `nirs4all` library. Other language bindings use `nirs4all`.
 
+The Python aggregate also exposes two **additive, non-shadowing** import facades
+(see [`docs/NAMING.md`](docs/NAMING.md)): the brand root `n4a` (`import n4a`) and
+the `nirs4all_core` forward-compatible alias for the release-gated
+`nirs4all-lite` → `nirs4all-core` direction. Both re-export `nirs4all_lite`
+verbatim and add no behavior; the published distribution stays `nirs4all-lite`.
+
 ## Public surface
 
 Every binding exposes the upstream domains directly:

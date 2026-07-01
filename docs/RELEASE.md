@@ -18,7 +18,18 @@ Before release:
 5. Run equivalent-pipeline checks against full Python `nirs4all`.
 6. Verify external operator capability levels: metadata-only operators must not
    be marketed as executable, and executable operators must have parity fixtures.
-7. Publish artifacts and record provenance in the release notes.
+7. Verify the Python release topology manifest: current installs still publish
+   `nirs4all-lite`, additive imports are limited to `n4a` / `nirs4all_core`,
+   and `nirs4all_core` advertises no execution-engine exports.
+8. Publish artifacts and record provenance in the release notes.
+
+`nirs4all_lite.release_topology_manifest()` is the lite-side consumer contract
+for ecosystem release manifests. It records the current `nirs4all-lite` Python
+distribution, the release-gated `nirs4all-core` target, per-registry aggregate
+artifact rows, Python facade namespaces, optional upstream policy (notably
+external `nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI
+pointers. Central release tooling should consume these fields instead of
+re-deriving lite/core topology from prose.
 
 Local artifact commands:
 

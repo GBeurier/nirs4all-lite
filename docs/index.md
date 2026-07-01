@@ -48,6 +48,12 @@ The Python distribution keeps the name `nirs4all-lite` (imported as
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
+In Python the aggregate additionally exposes two **additive, non-shadowing**
+import facades (see [](NAMING.md)): the brand root `n4a` (`import n4a`) and the
+`nirs4all_core` forward-compatible alias for the release-gated
+`nirs4all-lite` → `nirs4all-core` direction. Both only re-export `nirs4all_lite`;
+the published distribution stays `nirs4all-lite`.
+
 :::{note}
 This is the portable aggregate distribution. It is **not** `nirs4all-web` (the
 standalone browser/WASM client) and **not** `nirs4all-studio` (the desktop/web
@@ -88,6 +94,7 @@ getting_started
 
 ARCHITECTURE
 BINDINGS
+NAMING
 OPERATORS
 COMPATIBILITY
 ```
