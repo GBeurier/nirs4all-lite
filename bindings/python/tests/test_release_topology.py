@@ -2,6 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
+import n4a
 import nirs4all_core
 import nirs4all_lite as n4lite
 
@@ -14,12 +15,19 @@ except ModuleNotFoundError:  # pragma: no cover - local Python < 3.11 fallback
 ROOT = Path(__file__).resolve().parents[3]
 
 
+def _load_pyproject() -> dict[str, object]:
+    return tomllib.loads((ROOT / "bindings/python/pyproject.toml").read_text())
+
+
 class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_manifest_is_json_serializable_and_names_current_distribution(self) -> None:
         manifest = n4lite.release_topology_manifest()
 
         json.dumps(manifest)
         self.assertEqual(manifest["schema"], "nirs4all-lite.release-topology.v1")
+        self.assertEqual(manifest["aggregate"]["id"], "nirs4all-lite")
+        self.assertEqual(manifest["aggregate"]["future_id"], "nirs4all-core")
+        self.assertFalse(manifest["aggregate"]["private"])
         self.assertEqual(manifest["python"]["distribution"], "nirs4all-lite")
         self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
         self.assertEqual(manifest["python"]["target_distribution"], "nirs4all-core")
@@ -30,6 +38,17 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("n4a", manifest["python"]["additive_imports"])
         self.assertIn("nirs4all_core", manifest["python"]["additive_imports"])
         self.assertIn("nirs4all", manifest["python"]["reserved_non_imports"])
+
+    def test_manifest_returns_a_deep_copy_for_consumers(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        manifest["aggregate"]["id"] = "mutated"
+        manifest["install_distributions"].clear()
+        manifest["release_pointers"]["license"]["files"].clear()
+
+        fresh = n4lite.release_topology_manifest()
+        self.assertEqual(fresh["aggregate"]["id"], "nirs4all-lite")
+        self.assertGreater(len(fresh["install_distributions"]), 0)
+        self.assertIn("LICENSE", fresh["release_pointers"]["license"]["files"])
 
     def test_manifest_keeps_core_out_of_execution_engine_role(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -53,9 +72,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
 
     def test_pyproject_matches_python_release_topology(self) -> None:
-        pyproject = tomllib.loads(
-            (ROOT / "bindings/python/pyproject.toml").read_text()
-        )
+        pyproject = _load_pyproject()
         manifest = n4lite.release_topology_manifest()
 
         self.assertEqual(
@@ -72,20 +89,192 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
         self.assertNotIn("src/nirs4all", packages)
 
-    def test_install_distributions_remain_explicit(self) -> None:
+    def test_namespace_facades_are_machine_readable(self) -> None:
         manifest = n4lite.release_topology_manifest()
-        distributions = {
-            item["name"]: item for item in manifest["install_distributions"]
+        pyproject = _load_pyproject()
+        wheel_packages = {
+            Path(package).name
+            for package in pyproject["tool"]["hatch"]["build"]["targets"]["wheel"][
+                "packages"
+            ]
+        }
+        facades = {
+            item["import"]: item for item in manifest["namespace_facades"]["python"]
         }
 
-        self.assertEqual(distributions["nirs4all-lite"]["status"], "current")
-        self.assertEqual(distributions["nirs4all-core"]["status"], "release-gated")
         self.assertEqual(
-            distributions["nirs4all-methods"]["status"],
+            set(facades),
+            {"nirs4all_lite", "n4a", "nirs4all_core"},
+        )
+        self.assertEqual(set(facades), wheel_packages)
+        self.assertEqual(facades["nirs4all_lite"]["kind"], "canonical")
+        self.assertEqual(facades["n4a"]["backing_import"], "nirs4all_lite")
+        self.assertEqual(n4a.__aggregate_import__, "nirs4all_lite")
+        self.assertEqual(
+            facades["nirs4all_core"]["target_distribution"],
+            "nirs4all-core",
+        )
+        self.assertFalse(facades["nirs4all_core"]["execution_engine"])
+        self.assertEqual(facades["nirs4all_core"]["exports"], "core_contract")
+        self.assertEqual(nirs4all_core.__aggregate_import__, "nirs4all_lite")
+        reserved_reason = "owned by the full Python modelling library until cutover"
+        self.assertEqual(
+            manifest["namespace_facades"]["reserved_python_imports"],
+            [{"import": "nirs4all", "reason": reserved_reason}],
+        )
+
+        non_python = {
+            (
+                item["ecosystem"],
+                item["distribution"],
+                item["namespace"],
+            )
+            for item in manifest["namespace_facades"]["non_python"]
+        }
+        self.assertEqual(
+            non_python,
+            {
+                ("rust", "nirs4all", "nirs4all"),
+                ("javascript_wasm", "nirs4all", "nirs4all"),
+                ("r", "nirs4all", "library(nirs4all)"),
+                ("matlab_octave", "nirs4all", "+nirs4all"),
+            },
+        )
+
+    def test_install_distributions_remain_explicit(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        index = {
+            (item["ecosystem"], item["registry"], item["name"]): item
+            for item in manifest["install_distributions"]
+        }
+
+        self.assertEqual(len(index), len(manifest["install_distributions"]))
+        expected_current_artifacts = {
+            ("python", "pypi", "nirs4all-lite"): (
+                "current",
+                "release-python.yml",
+                "wheel+sdist",
+            ),
+            ("rust", "crates.io", "nirs4all"): (
+                "current",
+                "release-crates.yml",
+                "crate",
+            ),
+            ("javascript_wasm", "npm", "nirs4all"): (
+                "current",
+                "release-npm.yml",
+                "npm package",
+            ),
+            ("r", "cran/r-universe", "nirs4all"): (
+                "current",
+                "release-r.yml",
+                "source package",
+            ),
+            ("matlab_octave", "github-release", "nirs4all-matlab-octave"): (
+                "current",
+                "release-matlab.yml",
+                "zip archive",
+            ),
+            ("source_sbom", "github-release", "nirs4all-lite-source-sbom"): (
+                "current",
+                "release-source.yml",
+                "source archive + CycloneDX SBOM + SHA256SUMS",
+            ),
+        }
+
+        for key, (status, workflow, artifact) in expected_current_artifacts.items():
+            with self.subTest(distribution=key):
+                self.assertEqual(index[key]["status"], status)
+                self.assertEqual(index[key]["workflow"], workflow)
+                self.assertEqual(index[key]["artifact"], artifact)
+
+        future_python = index[("python", "pypi", "nirs4all-core")]
+        self.assertEqual(future_python["status"], "release-gated")
+        self.assertIsNone(future_python["workflow"])
+        self.assertIsNone(future_python["artifact"])
+
+        upstream_rows = {
+            item["component_key"]: item
+            for item in manifest["install_distributions"]
+            if item["ecosystem"] == "python" and "component_key" in item
+        }
+        self.assertEqual(
+            set(upstream_rows),
+            {"methods", "formats", "io", "datasets", "dag_ml", "dag_ml_data"},
+        )
+        self.assertEqual(
+            upstream_rows["methods"]["status"],
             "upstream-explicit",
         )
-        self.assertEqual(distributions["nirs4all"]["status"], "current")
-        self.assertEqual(distributions["nirs4all-datasets"]["status"], "external-optional")
+        self.assertEqual(upstream_rows["datasets"]["status"], "external-optional")
+        self.assertEqual(upstream_rows["datasets"]["default_inclusion"], "external")
+
+    def test_optional_upstreams_are_explicit_and_match_python_extras(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        pyproject = _load_pyproject()
+        extras = pyproject["project"]["optional-dependencies"]
+        all_extra = extras["all"]
+        components = {
+            item["key"]: item for item in manifest["upstream_components"]
+        }
+
+        self.assertEqual(set(components), set(n4lite.upstreams))
+        self.assertFalse(any(component["private"] for component in components.values()))
+
+        for key, upstream in n4lite.upstreams.items():
+            with self.subTest(upstream=key):
+                component = components[key]
+                self.assertEqual(component["role"], upstream.role)
+                python = component["python"]
+                self.assertIn(python["extra"], extras)
+                if python["bundled_in_all"]:
+                    self.assertTrue(
+                        any(
+                            dependency.startswith(python["distribution"])
+                            for dependency in all_extra
+                        )
+                    )
+
+        datasets = components["datasets"]
+        self.assertTrue(datasets["optional"])
+        self.assertEqual(datasets["default_inclusion"], "external")
+        self.assertFalse(datasets["python"]["bundled_in_all"])
+        self.assertFalse(
+            any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
+        )
+
+    def test_release_pointers_include_license_provenance_and_methods_abi(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        pyproject = _load_pyproject()
+        pointers = manifest["release_pointers"]
+
+        license_pointer = pointers["license"]
+        self.assertEqual(
+            license_pointer["expression"],
+            pyproject["project"]["license"],
+        )
+        self.assertEqual(
+            license_pointer["source"],
+            "bindings/python/pyproject.toml:project.license",
+        )
+        for relative_path in license_pointer["files"]:
+            with self.subTest(license_file=relative_path):
+                self.assertTrue((ROOT / relative_path).exists())
+
+        abi_pointers = {item["key"]: item for item in pointers["abi"]}
+        methods_abi = abi_pointers["methods_c_abi"]
+        methods_component = {
+            item["key"]: item for item in manifest["upstream_components"]
+        }["methods"]
+        self.assertEqual(methods_abi["provider"], "nirs4all-methods")
+        self.assertEqual(methods_abi["component_key"], "methods")
+        self.assertEqual(
+            methods_abi["header"],
+            methods_component["packages"]["c_abi"][0]["header"],
+        )
+        self.assertEqual(methods_abi["symbol_prefix"], "n4m_")
+        self.assertIn("n4m.abi", methods_abi["conformance_refs"])
+        self.assertEqual(pointers["provenance"]["workflow"], "release-source.yml")
 
 
 if __name__ == "__main__":
