@@ -17,7 +17,8 @@
 * `Imports`: `jsonlite`, `yaml` only (the lightweight definition-envelope
   parsing the package itself performs). The package is otherwise a leaf in the
   CRAN dependency graph.
-* License: `MIT + file LICENSE`.
+* License: `CeCILL-2.1 | AGPL (>= 3)`, matching the aggregate source license
+  expression `CeCILL-2.1 OR AGPL-3.0-or-later`.
 * The same aggregate surface is shipped to the project's Python (PyPI, as
   `nirs4all-lite`), JavaScript / WebAssembly (npm) and Rust (crates.io) targets.
 

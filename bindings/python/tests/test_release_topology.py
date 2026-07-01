@@ -19,6 +19,20 @@ def _load_pyproject() -> dict[str, object]:
     return tomllib.loads((ROOT / "bindings/python/pyproject.toml").read_text())
 
 
+def _load_r_description() -> dict[str, str]:
+    fields: dict[str, str] = {}
+    current: str | None = None
+    for line in (ROOT / "bindings/r/DESCRIPTION").read_text().splitlines():
+        if line.startswith((" ", "\t")) and current is not None:
+            fields[current] = f"{fields[current]} {line.strip()}".strip()
+            continue
+        key, sep, value = line.partition(":")
+        if sep:
+            current = key
+            fields[current] = value.strip()
+    return fields
+
+
 class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_manifest_is_json_serializable_and_names_current_distribution(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -260,6 +274,14 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         for relative_path in license_pointer["files"]:
             with self.subTest(license_file=relative_path):
                 self.assertTrue((ROOT / relative_path).exists())
+
+        r_description = _load_r_description()
+        self.assertEqual(
+            r_description["License"],
+            "CeCILL-2.1 | AGPL (>= 3)",
+        )
+        r_license_note = (ROOT / "bindings/r/LICENSE").read_text()
+        self.assertIn(license_pointer["expression"], r_license_note)
 
         abi_pointers = {item["key"]: item for item in pointers["abi"]}
         methods_abi = abi_pointers["methods_c_abi"]
