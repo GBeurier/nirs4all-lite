@@ -28,6 +28,42 @@ class FacadeImportSurfaceTests(unittest.TestCase):
         self.assertTrue(hasattr(n4lite, "upstreams"))
         self.assertTrue(hasattr(n4lite, "load_pipeline_definition"))
 
+    def test_aggregate_public_surface_is_explicit(self) -> None:
+        expected_exports = [
+            "LazyUpstream",
+            "PORTABLE_OPERATOR_CLASSES",
+            "PortableDataset",
+            "PipelineDefinition",
+            "CORE_FACADE_EXPORTS",
+            "EXECUTION_ENGINE_EXPORTS",
+            "TOPOLOGY_EXPORTS",
+            "Upstream",
+            "available_upstreams",
+            "core_facade_exports",
+            "dag_ml",
+            "dag_ml_data",
+            "datasets",
+            "execution_engine_exports",
+            "formats",
+            "import_upstream",
+            "io",
+            "load_pipeline_definition",
+            "methods",
+            "parse_execution_plan",
+            "portable_class_names",
+            "release_topology_manifest",
+            "require_upstream",
+            "run_portable_pipeline",
+            "upstream_status",
+            "upstreams",
+            "validate_core_facade",
+        ]
+
+        self.assertEqual(n4lite.__all__, expected_exports)
+        for name in expected_exports:
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(n4lite, name))
+
     def test_n4a_advertises_the_same_public_surface(self) -> None:
         self.assertEqual(set(n4a.__all__), set(n4lite.__all__))
 

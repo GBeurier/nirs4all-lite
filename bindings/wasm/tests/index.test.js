@@ -2,18 +2,80 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
+import * as nirs4all from '../src/index.js';
 import {
+  dagMl,
+  dagMlData,
+  datasets,
+  formats,
   importUpstream,
+  io,
+  loadDagMl,
+  loadDagMlData,
+  loadDagMlDataWasm,
+  loadDagMlWasm,
+  loadDataIoWasm,
+  loadDatasets,
+  loadDatasetsWasm,
+  loadFormats,
+  loadIo,
+  loadMethods,
+  loadMethodsWasm,
   loadPipelineDefinition,
   loadPortableStack,
   methods,
+  methodsWasm,
   portableClassNames,
+  portableOperatorClasses,
+  predictPortablePipeline,
+  runPortablePipeline,
   upstream,
   upstreams,
 } from '../src/index.js';
 
 const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
 const yamlFixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.yaml', import.meta.url);
+
+test('public V1 WASM surface exports expected names', () => {
+  assert.deepEqual(
+    Object.keys(nirs4all).sort(),
+    [
+      'dagMl',
+      'dagMlData',
+      'datasets',
+      'formats',
+      'importUpstream',
+      'io',
+      'loadDagMl',
+      'loadDagMlData',
+      'loadDagMlDataWasm',
+      'loadDagMlWasm',
+      'loadDataIoWasm',
+      'loadDatasets',
+      'loadDatasetsWasm',
+      'loadFormats',
+      'loadIo',
+      'loadMethods',
+      'loadMethodsWasm',
+      'loadPipelineDefinition',
+      'loadPortableStack',
+      'methods',
+      'methodsWasm',
+      'parseExecutionPlan',
+      'portableClassNames',
+      'portableOperatorClasses',
+      'predictPortablePipeline',
+      'runPortablePipeline',
+      'upstream',
+      'upstreams',
+    ].sort(),
+  );
+  assert.equal(nirs4all.loadPipelineDefinition, loadPipelineDefinition);
+  assert.equal(nirs4all.runPortablePipeline, runPortablePipeline);
+  assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
+  assert.equal(nirs4all.portableOperatorClasses, portableOperatorClasses);
+  assert.equal(nirs4all.methodsWasm, methodsWasm);
+});
 
 test('expected upstreams are registered', () => {
   assert.deepEqual(
@@ -31,7 +93,35 @@ test('upstream lookup returns metadata', () => {
 });
 
 test('domain proxies expose keys', () => {
+  assert.equal(formats.key, 'formats');
+  assert.equal(io.key, 'io');
+  assert.equal(datasets.key, 'datasets');
   assert.equal(methods.key, 'methods');
+  assert.equal(dagMl.key, 'dag_ml');
+  assert.equal(dagMlData.key, 'dag_ml_data');
+});
+
+test('public upstream loaders map to the declared V1 upstreams', () => {
+  assert.equal(typeof loadFormats, 'function');
+  assert.equal(typeof loadIo, 'function');
+  assert.equal(typeof loadDatasets, 'function');
+  assert.equal(typeof loadMethods, 'function');
+  assert.equal(typeof loadDagMl, 'function');
+  assert.equal(typeof loadDagMlData, 'function');
+  assert.equal(typeof loadMethodsWasm, 'function');
+  assert.equal(typeof loadDagMlWasm, 'function');
+  assert.equal(typeof loadDagMlDataWasm, 'function');
+  assert.equal(typeof loadDatasetsWasm, 'function');
+  assert.equal(typeof loadDataIoWasm, 'function');
+});
+
+test('public upstream loaders report the correct missing upstream', async () => {
+  await assert.rejects(loadFormats, /upstream 'formats'.*nirs4all-formats-wasm/s);
+  await assert.rejects(loadIo, /upstream 'io'.*nirs4all-io-wasm/s);
+  await assert.rejects(loadDatasets, /upstream 'datasets'.*@nirs4all\/datasets-wasm/s);
+  await assert.rejects(loadMethods, /upstream 'methods'.*@nirs4all\/methods-wasm/s);
+  await assert.rejects(loadDagMl, /upstream 'dag_ml'.*dag-ml-wasm/s);
+  await assert.rejects(loadDagMlData, /upstream 'dag_ml_data'.*dag-ml-data-wasm/s);
 });
 
 test('upstream imports fail explicitly when optional wasm packages are absent', async () => {

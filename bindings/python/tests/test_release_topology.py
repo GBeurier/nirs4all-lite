@@ -311,17 +311,36 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "javascript_wasm": "release-npm.yml",
             "r": "release-r.yml",
         }
-        expected_gates = {
+        expected_release_gates = {
             "python": ("test-python", "required"),
             "javascript_wasm": ("test-wasm", "required"),
             "r": ("test-r-if-available", "skip-locally-if-r-missing"),
         }
+        expected_surface_gate_targets = {
+            "python": "test-python-v1-surfaces",
+            "javascript_wasm": "test-wasm-v1-surfaces",
+            "r": "test-r-v1-surfaces-if-available",
+        }
         self.assertEqual(
             _makefile_target_dependencies(makefile, "test-v1-surfaces"),
-            ["test-python", "test-wasm", "test-r-if-available"],
+            [
+                "test-python-v1-surfaces",
+                "test-wasm-v1-surfaces",
+                "test-r-v1-surfaces-if-available",
+            ],
         )
+        self.assertIn("bindings/python/tests/test_release_topology.py", makefile)
+        self.assertIn("bindings/python/tests/test_facade.py", makefile)
+        self.assertIn("bindings/python/tests/test_pipeline_contract.py", makefile)
+        self.assertIn("bindings/python/tests/test_upstreams.py", makefile)
+        self.assertIn("test:v1-surface", makefile)
+        self.assertIn("bindings/r/tests/surface.R", makefile)
         self.assertIn("command -v R >/dev/null 2>&1", makefile)
-        self.assertIn("Skipping R CMD check: R is not installed", makefile)
+        self.assertIn(
+            "SKIP/RISK: R V1 public surface not checked: R/Rscript is not installed",
+            makefile,
+        )
+        self.assertIn("set -eu", makefile)
 
         for ecosystem, package_name in expected_names.items():
             with self.subTest(ecosystem=ecosystem):
@@ -332,9 +351,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                     expected_workflows[ecosystem],
                 )
                 self.assertIn(f"{surface['local_gate']}:", makefile)
+                self.assertIn(f"{expected_surface_gate_targets[ecosystem]}:", makefile)
                 self.assertEqual(
                     (surface["local_gate"], surface["tool_policy"]),
-                    expected_gates[ecosystem],
+                    expected_release_gates[ecosystem],
                 )
 
                 distribution = install_distributions[

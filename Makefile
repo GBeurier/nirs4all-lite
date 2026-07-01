@@ -7,11 +7,11 @@ NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/gen
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
-.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity test-wasm test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
-test-v1-surfaces: test-python test-wasm test-r-if-available
+test-v1-surfaces: test-python-v1-surfaces test-wasm-v1-surfaces test-r-v1-surfaces-if-available
 
 test-rust:
 	cargo fmt --all --check
@@ -24,12 +24,30 @@ test-rust-parity:
 test-python:
 	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest discover -s bindings/python/tests
 
+test-python-v1-surfaces:
+	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest -v \
+		bindings/python/tests/test_release_topology.py \
+		bindings/python/tests/test_facade.py \
+		bindings/python/tests/test_pipeline_contract.py \
+		bindings/python/tests/test_upstreams.py
+
 test-python-parity:
 	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
 
 test-wasm:
 	npm ci --prefix bindings/wasm
 	npm test --prefix bindings/wasm
+
+test-wasm-v1-surfaces:
+	npm ci --prefix bindings/wasm
+	npm run test:v1-surface --prefix bindings/wasm
+
+test-wasm-v1-surfaces-if-available:
+	@if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
+		$(MAKE) test-wasm-v1-surfaces; \
+	else \
+		printf '%s\n' "SKIP/RISK: WASM V1 public surface not checked: node/npm is not installed"; \
+	fi
 
 test-r:
 	R CMD check --no-manual bindings/r
@@ -38,7 +56,23 @@ test-r-if-available:
 	@if command -v R >/dev/null 2>&1; then \
 		$(MAKE) test-r; \
 	else \
-		printf '%s\n' "Skipping R CMD check: R is not installed"; \
+		printf '%s\n' "SKIP/RISK: R CMD check not run: R is not installed"; \
+	fi
+
+test-r-v1-surfaces:
+	@set -eu; \
+	tmp="$$(mktemp -d)"; \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	R CMD INSTALL --library="$$tmp" bindings/r; \
+	R_LIBS_USER="$$tmp:$${R_LIBS_USER:-}" Rscript bindings/r/tests/surface.R; \
+	R_LIBS_USER="$$tmp:$${R_LIBS_USER:-}" Rscript bindings/r/tests/upstreams.R; \
+	R_LIBS_USER="$$tmp:$${R_LIBS_USER:-}" Rscript bindings/r/tests/pipeline.R
+
+test-r-v1-surfaces-if-available:
+	@if command -v R >/dev/null 2>&1 && command -v Rscript >/dev/null 2>&1; then \
+		$(MAKE) test-r-v1-surfaces; \
+	else \
+		printf '%s\n' "SKIP/RISK: R V1 public surface not checked: R/Rscript is not installed"; \
 	fi
 
 test-r-fixtures:

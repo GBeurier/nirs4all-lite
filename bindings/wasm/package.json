@@ -18,6 +18,7 @@
   "scripts": {
     "test": "npm run test:js && npm run typecheck",
     "test:js": "node --test tests/*.test.js",
+    "test:v1-surface": "node --test tests/index.test.js tests/execution.test.js && npm run typecheck",
     "typecheck": "tsc --project tsconfig.typecheck.json"
   },
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
