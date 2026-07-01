@@ -24,12 +24,17 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 - Distribution name: `nirs4all-lite`.
 - Import name: `nirs4all_lite`.
+- Additive import facades (LOCK-GOV, see [naming](NAMING.md)): `n4a` (the
+  brand-aligned root, `import n4a`) and `nirs4all_core` (the forward-compatible
+  alias for the release-gated `nirs4all-lite` → `nirs4all-core` rename). Both
+  only re-export the `nirs4all_lite` surface and add no behavior.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - External operators should look like normal sklearn-compatible transformers or
   estimators when they participate in Python execution.
 - Do not shadow the full Python `nirs4all` package until the core replacement
-  migration is intentional.
+  migration is intentional. The `n4a` / `nirs4all_core` facades are additive and
+  intentionally do **not** define a top-level `nirs4all` Python module.
 
 ## Rust
 
