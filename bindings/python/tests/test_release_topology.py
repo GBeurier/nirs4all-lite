@@ -464,6 +464,33 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
 
+    def test_compat_registry_matches_release_topology_packages(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        components = {
+            item["key"]: item for item in manifest["upstream_components"]
+        }
+        compat = _load_compat_upstreams()
+
+        self.assertEqual(set(compat), set(components))
+
+        for key, component in components.items():
+            with self.subTest(upstream=key):
+                compat_item = compat[key]
+                packages = component["packages"]
+                self.assertEqual(compat_item["repo"], component["repo"])
+                self.assertEqual(compat_item["role"], component["role"])
+                self.assertEqual(
+                    compat_item.get("python_imports", []),
+                    component["python"]["imports"],
+                )
+                self.assertEqual(compat_item.get("r_packages", []), packages["r"])
+                self.assertEqual(compat_item.get("wasm_packages", []), packages["npm"])
+                bindings = set(compat_item.get("bindings", []))
+                if packages["r"]:
+                    self.assertIn("r", bindings)
+                if packages["npm"]:
+                    self.assertIn("wasm", bindings)
+
     def test_release_pointers_include_license_provenance_and_methods_abi(self) -> None:
         manifest = n4lite.release_topology_manifest()
         pyproject = _load_pyproject()

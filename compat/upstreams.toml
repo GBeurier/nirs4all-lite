@@ -7,7 +7,7 @@
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
 role = "Leakage-safe DAG/ML execution coordinator"
-bindings = ["rust", "c"]
+bindings = ["rust", "c", "wasm"]
 python_imports = ["dag_ml"]
 wasm_packages = ["dag-ml-wasm"]
 
@@ -42,8 +42,9 @@ wasm_packages = ["nirs4all-io-wasm"]
 key = "datasets"
 repo = "GBeurier/nirs4all-datasets"
 role = "DOI-pinned NIRS dataset catalog"
-bindings = ["rust", "python", "wasm", "c"]
+bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_datasets", "nirs4all.datasets"]
+r_packages = ["nirs4alldatasets"]
 wasm_packages = ["@nirs4all/datasets-wasm"]
 
 [[upstream]]
