@@ -42,7 +42,76 @@ permissions:
   id-token: write   # npm provenance (OIDC)
 
 jobs:
+  strict-wasm-parity:
+    name: Strict WASM parity / Python oracle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Read pinned nirs4all-methods ref
+        id: methods-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          methods = [item for item in upstreams if item.get("key") == "methods"]
+          if len(methods) != 1:
+              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
+          ref = methods[0].get("ref")
+          if not isinstance(ref, str) or not ref.strip():
+              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={ref.strip()}\n")
+
+      - uses: actions/checkout@v4
+        with:
+          repository: GBeurier/nirs4all-methods
+          path: nirs4all-methods
+          ref: ${{ steps.methods-pin.outputs.ref }}
+
+      - name: Install Emscripten SDK
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install latest
+          "$RUNNER_TEMP/emsdk/emsdk" activate latest
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          {
+            echo "EMSDK=$EMSDK"
+            echo "EMSDK_NODE=$EMSDK_NODE"
+          } >> "$GITHUB_ENV"
+          {
+            echo "$EMSDK"
+            echo "$EMSDK/upstream/emscripten"
+          } >> "$GITHUB_PATH"
+
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
+      - run: npm ci --prefix bindings/wasm
+      - run: cmake --preset emscripten
+        working-directory: nirs4all-methods
+      - run: cmake --build --preset emscripten --target pls4all_wasm --parallel
+        working-directory: nirs4all-methods
+      - run: npm ci
+        working-directory: nirs4all-methods/bindings/js
+      - run: npm run build && npm run stage:wasm
+        working-directory: nirs4all-methods/bindings/js
+      - name: Run strict WASM parity against the Python oracle
+        run: |
+          NIRS4ALL_METHODS_JS_DIST="$GITHUB_WORKSPACE/nirs4all-methods/bindings/js/dist" \
+          NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+          npm test --prefix bindings/wasm
+
   build-and-publish:
+    needs: strict-wasm-parity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

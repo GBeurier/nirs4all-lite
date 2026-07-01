@@ -101,9 +101,66 @@ jobs:
           name: rcheck-${{ matrix.cfg.label }}
           path: bindings/r.Rcheck/
 
+  strict-r-parity:
+    name: Strict R parity / Python oracle
+    runs-on: ubuntu-22.04
+    env:
+      R_LIBS_USER: /tmp/nirs4all-lite-r-library
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Read pinned nirs4all-methods ref
+        id: methods-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          methods = [item for item in upstreams if item.get("key") == "methods"]
+          if len(methods) != 1:
+              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
+          ref = methods[0].get("ref")
+          if not isinstance(ref, str) or not ref.strip():
+              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={ref.strip()}\n")
+
+      - uses: actions/checkout@v4
+        with:
+          repository: GBeurier/nirs4all-methods
+          path: nirs4all-methods
+          ref: ${{ steps.methods-pin.outputs.ref }}
+
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake gcc-12 g++-12 ninja-build
+      - name: Install hard deps (jsonlite, yaml)
+        shell: Rscript {0}
+        run: install.packages(c("jsonlite", "yaml"))
+      - run: cmake --preset dev-release
+        working-directory: nirs4all-methods
+      - run: cmake --build --preset dev-release --target n4m_c --parallel
+        working-directory: nirs4all-methods
+      - run: mkdir -p "$R_LIBS_USER"
+      - name: Run strict R parity against the Python oracle
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          NIRS4ALL_LITE_REQUIRE_METHODS_PARITY: "1"
+        run: make test-r-parity
+
   build-tarball:
     name: Build R source tarball
-    needs: check
+    needs:
+      - check
+      - strict-r-parity
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4

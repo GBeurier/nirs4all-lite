@@ -5,6 +5,7 @@ from pathlib import Path
 import n4a
 import nirs4all_core
 import nirs4all_lite as n4lite
+import yaml
 
 try:
     import tomllib
@@ -35,6 +36,49 @@ def _load_r_description() -> dict[str, str]:
 
 def _load_wasm_package() -> dict[str, object]:
     return json.loads((ROOT / "bindings/wasm/package.json").read_text())
+
+
+def _load_workflow(name: str) -> str:
+    return (ROOT / ".github" / "workflows" / name).read_text()
+
+
+def _load_workflow_yaml(name: str) -> dict[str, object]:
+    return yaml.safe_load(_load_workflow(name))
+
+
+def _load_compat_upstreams() -> dict[str, dict[str, object]]:
+    upstreams = tomllib.loads((ROOT / "compat/upstreams.toml").read_text())["upstream"]
+    return {item["key"]: item for item in upstreams}
+
+
+def _checkout_step(job: dict[str, object], repository: str) -> dict[str, object]:
+    matches = [
+        step
+        for step in job["steps"]
+        if step.get("uses") == "actions/checkout@v4"
+        and step.get("with", {}).get("repository") == repository
+    ]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one checkout step for {repository}, got {len(matches)}")
+    return matches[0]
+
+
+def _step_by_id(job: dict[str, object], step_id: str) -> dict[str, object]:
+    matches = [step for step in job["steps"] if step.get("id") == step_id]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one step id {step_id}, got {len(matches)}")
+    return matches[0]
+
+
+def _step_by_name(job: dict[str, object], name: str) -> dict[str, object]:
+    matches = [step for step in job["steps"] if step.get("name") == name]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one step named {name}, got {len(matches)}")
+    return matches[0]
+
+
+def _job_run_text(job: dict[str, object]) -> str:
+    return "\n".join(str(step.get("run", "")) for step in job["steps"])
 
 
 def _makefile_target_dependencies(makefile: str, target: str) -> list[str]:
@@ -295,6 +339,49 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 self.assertEqual(distribution["status"], "current")
                 self.assertEqual(distribution["workflow"], surface["release_workflow"])
                 self.assertEqual(distribution["default_inclusion"], "base")
+
+    def test_public_r_and_wasm_releases_require_strict_parity(self) -> None:
+        methods = _load_compat_upstreams()["methods"]
+        self.assertEqual(methods["repo"], "GBeurier/nirs4all-methods")
+        self.assertRegex(str(methods["ref"]), r"^[0-9a-f]{40}$")
+
+        expected_ref = "${{ steps.methods-pin.outputs.ref }}"
+        npm_workflow = _load_workflow_yaml("release-npm.yml")
+        npm_jobs = npm_workflow["jobs"]
+        npm_job = npm_jobs["strict-wasm-parity"]
+        self.assertEqual(npm_jobs["build-and-publish"]["needs"], "strict-wasm-parity")
+        npm_pin = _step_by_id(npm_job, "methods-pin")
+        self.assertEqual(npm_pin["shell"], "python")
+        self.assertIn("compat/upstreams.toml", npm_pin["run"])
+        self.assertIn('item.get("key") == "methods"', npm_pin["run"])
+        npm_checkout = _checkout_step(npm_job, methods["repo"])
+        self.assertEqual(npm_checkout["with"]["path"], "nirs4all-methods")
+        self.assertEqual(npm_checkout["with"]["ref"], expected_ref)
+        npm_runs = _job_run_text(npm_job)
+        self.assertIn("cmake --preset emscripten", npm_runs)
+        self.assertIn("NIRS4ALL_METHODS_JS_DIST=", npm_runs)
+        self.assertIn("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1", npm_runs)
+        self.assertIn("npm test --prefix bindings/wasm", npm_runs)
+
+        r_workflow = _load_workflow_yaml("release-r.yml")
+        r_jobs = r_workflow["jobs"]
+        r_job = r_jobs["strict-r-parity"]
+        self.assertEqual(set(r_jobs["build-tarball"]["needs"]), {"check", "strict-r-parity"})
+        r_pin = _step_by_id(r_job, "methods-pin")
+        self.assertEqual(r_pin["shell"], "python")
+        self.assertIn("compat/upstreams.toml", r_pin["run"])
+        self.assertIn('item.get("key") == "methods"', r_pin["run"])
+        r_checkout = _checkout_step(r_job, methods["repo"])
+        self.assertEqual(r_checkout["with"]["path"], "nirs4all-methods")
+        self.assertEqual(r_checkout["with"]["ref"], expected_ref)
+        r_runs = _job_run_text(r_job)
+        self.assertIn("cmake --preset dev-release", r_runs)
+        self.assertIn("make test-r-parity", r_runs)
+        r_parity_step = _step_by_name(r_job, "Run strict R parity against the Python oracle")
+        self.assertEqual(
+            r_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],
+            "1",
+        )
 
     def test_optional_upstreams_are_explicit_and_match_python_extras(self) -> None:
         manifest = n4lite.release_topology_manifest()
