@@ -7,6 +7,15 @@ from ._pipeline import (
     load_pipeline_definition,
     portable_class_names,
 )
+from ._topology import (
+    CORE_FACADE_EXPORTS,
+    EXECUTION_ENGINE_EXPORTS,
+    TOPOLOGY_EXPORTS,
+    core_facade_exports,
+    execution_engine_exports,
+    release_topology_manifest,
+    validate_core_facade,
+)
 from ._upstreams import (
     LazyUpstream,
     Upstream,
@@ -29,11 +38,16 @@ __all__ = [
     "PORTABLE_OPERATOR_CLASSES",
     "PortableDataset",
     "PipelineDefinition",
+    "CORE_FACADE_EXPORTS",
+    "EXECUTION_ENGINE_EXPORTS",
+    "TOPOLOGY_EXPORTS",
     "Upstream",
     "available_upstreams",
+    "core_facade_exports",
     "dag_ml",
     "dag_ml_data",
     "datasets",
+    "execution_engine_exports",
     "formats",
     "import_upstream",
     "io",
@@ -41,8 +55,10 @@ __all__ = [
     "methods",
     "parse_execution_plan",
     "portable_class_names",
+    "release_topology_manifest",
     "require_upstream",
     "run_portable_pipeline",
     "upstream_status",
     "upstreams",
+    "validate_core_facade",
 ]

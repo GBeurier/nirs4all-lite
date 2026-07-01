@@ -3,9 +3,10 @@
 These guard three properties of the slice:
 
 1. legacy ``nirs4all_lite`` imports keep working unchanged;
-2. the additive facades expose the *same* public surface (same objects), so
-   they never silently drift from the aggregate;
-3. the facades do not shadow the full Python ``nirs4all`` library.
+2. ``n4a`` exposes the full aggregate surface without drift;
+3. ``nirs4all_core`` advertises the no-engine core contract while keeping
+   legacy explicit imports reachable through the compatibility passthrough;
+4. the facades do not shadow the full Python ``nirs4all`` library.
 """
 
 import importlib
@@ -19,8 +20,6 @@ import nirs4all_lite as n4lite
 
 FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "parity" / "fixtures"
 
-FACADES = (n4a, nirs4all_core)
-
 
 class FacadeImportSurfaceTests(unittest.TestCase):
     def test_legacy_aggregate_import_is_unchanged(self) -> None:
@@ -29,25 +28,46 @@ class FacadeImportSurfaceTests(unittest.TestCase):
         self.assertTrue(hasattr(n4lite, "upstreams"))
         self.assertTrue(hasattr(n4lite, "load_pipeline_definition"))
 
-    def test_facades_advertise_the_same_public_surface(self) -> None:
-        for facade in FACADES:
-            with self.subTest(facade=facade.__name__):
-                self.assertEqual(set(facade.__all__), set(n4lite.__all__))
+    def test_n4a_advertises_the_same_public_surface(self) -> None:
+        self.assertEqual(set(n4a.__all__), set(n4lite.__all__))
 
-    def test_facades_re_export_the_same_objects(self) -> None:
-        for facade in FACADES:
-            for name in n4lite.__all__:
-                with self.subTest(facade=facade.__name__, name=name):
-                    self.assertIs(getattr(facade, name), getattr(n4lite, name))
+    def test_n4a_re_exports_the_same_objects(self) -> None:
+        for name in n4lite.__all__:
+            with self.subTest(name=name):
+                self.assertIs(getattr(n4a, name), getattr(n4lite, name))
+
+    def test_core_advertises_only_the_core_contract(self) -> None:
+        expected = set(n4lite.core_facade_exports()) | set(n4lite.TOPOLOGY_EXPORTS)
+        self.assertEqual(set(nirs4all_core.__all__), expected)
+        self.assertFalse(
+            set(n4lite.execution_engine_exports()) & set(nirs4all_core.__all__)
+        )
+        self.assertEqual(
+            n4lite.validate_core_facade(nirs4all_core),
+            {"missing_core_exports": (), "unexpected_execution_exports": ()},
+        )
+
+    def test_core_re_exports_core_contract_objects(self) -> None:
+        for name in n4lite.core_facade_exports():
+            with self.subTest(name=name):
+                self.assertIs(getattr(nirs4all_core, name), getattr(n4lite, name))
+
+    def test_core_keeps_execution_imports_reachable_by_passthrough(self) -> None:
+        from nirs4all_core import run_portable_pipeline
+
+        self.assertIs(run_portable_pipeline, n4lite.run_portable_pipeline)
+        for name in n4lite.execution_engine_exports():
+            with self.subTest(name=name):
+                self.assertIs(getattr(nirs4all_core, name), getattr(n4lite, name))
 
     def test_facades_point_at_the_shipped_aggregate(self) -> None:
-        for facade in FACADES:
+        for facade in (n4a, nirs4all_core):
             with self.subTest(facade=facade.__name__):
                 self.assertEqual(facade.__aggregate_import__, "nirs4all_lite")
 
     def test_getattr_passthrough_reaches_non_exported_attributes(self) -> None:
         # `_upstreams` is an internal submodule of the aggregate, not in __all__.
-        for facade in FACADES:
+        for facade in (n4a, nirs4all_core):
             with self.subTest(facade=facade.__name__):
                 self.assertIs(facade._upstreams, n4lite._upstreams)
 
@@ -61,7 +81,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
 
 class FacadeBehaviourParityTests(unittest.TestCase):
     def test_upstream_registry_is_shared(self) -> None:
-        for facade in FACADES:
+        for facade in (n4a, nirs4all_core):
             with self.subTest(facade=facade.__name__):
                 self.assertIs(facade.upstreams, n4lite.upstreams)
                 self.assertEqual(facade.upstream_status(), n4lite.upstream_status())
@@ -78,9 +98,12 @@ class FacadeBehaviourParityTests(unittest.TestCase):
         fixture = FIXTURE_DIR / "portable_methods_pipeline.json"
 
         reference = n4lite.load_pipeline_definition(fixture)
-        for facade in FACADES:
+        for facade in (n4a, nirs4all_core):
             with self.subTest(facade=facade.__name__):
-                self.assertEqual(facade.load_pipeline_definition(fixture).as_dict(), reference.as_dict())
+                self.assertEqual(
+                    facade.load_pipeline_definition(fixture).as_dict(),
+                    reference.as_dict(),
+                )
                 self.assertEqual(
                     facade.portable_class_names(reference),
                     n4lite.portable_class_names(reference),

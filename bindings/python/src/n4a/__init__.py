@@ -30,56 +30,16 @@ from __future__ import annotations
 from typing import Any
 
 import nirs4all_lite as _aggregate
-from nirs4all_lite import (
-    PORTABLE_OPERATOR_CLASSES,
-    LazyUpstream,
-    PipelineDefinition,
-    PortableDataset,
-    Upstream,
-    available_upstreams,
-    dag_ml,
-    dag_ml_data,
-    datasets,
-    formats,
-    import_upstream,
-    io,
-    load_pipeline_definition,
-    methods,
-    parse_execution_plan,
-    portable_class_names,
-    require_upstream,
-    run_portable_pipeline,
-    upstream_status,
-    upstreams,
-)
 
 #: Import package currently backing this facade (``nirs4all_lite``). The
 #: LOCK-GOV target aggregate name is ``nirs4all-core``; until that
 #: release-gated cutover the facade simply forwards to the shipped aggregate.
 __aggregate_import__ = _aggregate.__name__
 
-__all__ = [
-    "LazyUpstream",
-    "PORTABLE_OPERATOR_CLASSES",
-    "PortableDataset",
-    "PipelineDefinition",
-    "Upstream",
-    "available_upstreams",
-    "dag_ml",
-    "dag_ml_data",
-    "datasets",
-    "formats",
-    "import_upstream",
-    "io",
-    "load_pipeline_definition",
-    "methods",
-    "parse_execution_plan",
-    "portable_class_names",
-    "require_upstream",
-    "run_portable_pipeline",
-    "upstream_status",
-    "upstreams",
-]
+__all__ = list(_aggregate.__all__)
+
+for _name in __all__:
+    globals()[_name] = getattr(_aggregate, _name)
 
 
 def __getattr__(name: str) -> Any:

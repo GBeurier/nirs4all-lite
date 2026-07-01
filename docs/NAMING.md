@@ -35,13 +35,16 @@ The actual Python distribution rename `nirs4all-lite` → `nirs4all-core` is
   `nirs4all-core` distribution is announced or published by this slice.
 - To let downstream code adopt the target import name early without breakage,
   the aggregate additionally exposes an **additive `nirs4all_core` import
-  alias** that re-exports `nirs4all_lite`. Importing `nirs4all_core` is
-  equivalent to importing `nirs4all_lite`.
+  facade**. Its advertised public contract is deliberately core-only:
+  inspection, validation, capability reporting, release topology, and facade
+  access. Execution helpers from `nirs4all_lite` stay reachable through
+  compatibility passthrough, but they are not part of `nirs4all_core.__all__`.
 
 ```python
 import nirs4all_core          # forward-compatible alias (additive)
 import nirs4all_lite          # canonical/legacy import — unchanged
 assert nirs4all_core.upstreams is nirs4all_lite.upstreams
+assert "run_portable_pipeline" not in nirs4all_core.__all__
 ```
 
 ## The `n4a` facade (additive brand root)
@@ -61,6 +64,11 @@ Both facades are **additive and non-shadowing**: they never remove or rename the
 `nirs4all_lite` surface, and — per the Python strategic-path rule — they do
 **not** define a top-level `nirs4all` Python module, so the full `nirs4all`
 library and the aggregate continue to coexist.
+
+The package exposes `release_topology_manifest()` as a machine-checkable summary
+of this contract. It records that the current Python distribution remains
+`nirs4all-lite`, the `nirs4all-core` distribution name is release-gated, and
+the `nirs4all_core` import contract is not an execution engine.
 
 ## `n4a` token disambiguation (GOV-004)
 
