@@ -37,6 +37,13 @@ def _load_wasm_package() -> dict[str, object]:
     return json.loads((ROOT / "bindings/wasm/package.json").read_text())
 
 
+def _makefile_target_dependencies(makefile: str, target: str) -> list[str]:
+    for line in makefile.splitlines():
+        if line.startswith(f"{target}:"):
+            return line.partition(":")[2].split()
+    raise AssertionError(f"Makefile target not found: {target}")
+
+
 class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_manifest_is_json_serializable_and_names_current_distribution(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -256,6 +263,17 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "javascript_wasm": "release-npm.yml",
             "r": "release-r.yml",
         }
+        expected_gates = {
+            "python": ("test-python", "required"),
+            "javascript_wasm": ("test-wasm", "required"),
+            "r": ("test-r-if-available", "skip-locally-if-r-missing"),
+        }
+        self.assertEqual(
+            _makefile_target_dependencies(makefile, "test-v1-surfaces"),
+            ["test-python", "test-wasm", "test-r-if-available"],
+        )
+        self.assertIn("command -v R >/dev/null 2>&1", makefile)
+        self.assertIn("Skipping R CMD check: R is not installed", makefile)
 
         for ecosystem, package_name in expected_names.items():
             with self.subTest(ecosystem=ecosystem):
@@ -266,6 +284,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                     expected_workflows[ecosystem],
                 )
                 self.assertIn(f"{surface['local_gate']}:", makefile)
+                self.assertEqual(
+                    (surface["local_gate"], surface["tool_policy"]),
+                    expected_gates[ecosystem],
+                )
 
                 distribution = install_distributions[
                     (ecosystem, surface["registry"], package_name)

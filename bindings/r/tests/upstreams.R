@@ -1,3 +1,5 @@
+library(nirs4all)
+
 status <- nirs4all::nirs4all_upstreams()
 
 stopifnot(identical(status$key, c("dag_ml", "dag_ml_data", "formats", "io", "datasets", "methods")))
