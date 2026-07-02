@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: GBeurier/nirs4all-methods
-          ref: 44cc94891348e0ba3c8ca84ef32073147894cf1c
+          ref: 6f6a3fa0dace421925502d4c8d5cab5102f56944
           path: nirs4all-methods
       - uses: actions/setup-python@v6
         with:
