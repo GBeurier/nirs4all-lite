@@ -1,0 +1,91 @@
+# Machine-readable capability ledger for the portable operator subset exposed by
+# each nirs4all aggregate language binding (shipping as `nirs4all-core`,
+# formerly `nirs4all-lite`).
+#
+# Capability levels use the vocabulary defined in docs/OPERATORS.md:
+#   metadata | plan | execute-local | execute-remote | parity-validated
+#
+# Honesty rule: every claim here is enforced by
+# bindings/python/tests/test_capability_matrix.py against the binding sources and
+# parity gate files. A binding may not claim `execute-local` (or better) without
+# a real run symbol, nor `parity-validated` without a real parity gate. The
+# aggregate never re-implements numerical logic; execution always delegates to
+# the `methods` upstream (nirs4all-methods / libn4m / +pls4all / n4m).
+
+# The portable operator subset every binding must expose consistently. This list
+# MUST equal nirs4all_lite.PORTABLE_OPERATOR_CLASSES (checked by the gate) and is
+# also cross-checked binding-by-binding in test_cross_language_surface.py.
+portable_operator_subset = [
+  "nirs4all.operators.splitters.KennardStoneSplitter",
+  "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+  "nirs4all.operators.transforms.SNV",
+  "nirs4all.operators.transforms.StandardNormalVariate",
+  "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+  "nirs4all.operators.transforms.SavitzkyGolay",
+  "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+  "sklearn.cross_decomposition.PLSRegression",
+  "sklearn.cross_decomposition._pls.PLSRegression",
+]
+
+# Portable Kennard-Stone / SNV / Savitzky-Golay / PLS pipeline execution.
+# Numerics are delegated to the `methods` upstream in every binding; the
+# aggregate owns only parsing, orchestration, and result-shape translation.
+[portable_pipeline]
+level = "parity-validated"
+upstream = "methods"
+oracle = "tests/parity/expected/portable_python_oracle.json"
+
+# Per-binding capability. `run_symbol` must appear in `run_source`; when the
+# level is `parity-validated`, `parity_gate` must exist (and `parity_symbol`, if
+# given, must appear in it). `execution` records HOW numerics are reached so the
+# claim stays auditable.
+[[binding]]
+language = "python"
+level = "parity-validated"
+run_symbol = "run_portable_pipeline"
+run_source = "bindings/python/src/nirs4all_lite/_execution.py"
+parity_gate = "bindings/python/tests/test_execution_parity.py"
+execution = "nirs4all-methods Python binding (n4m / pls4all) via libn4m"
+
+[[binding]]
+language = "rust"
+level = "parity-validated"
+run_symbol = "run_portable_pipeline_with_library"
+run_source = "bindings/rust/nirs4all/src/lib.rs"
+parity_gate = "bindings/rust/nirs4all/src/lib.rs"
+parity_symbol = "rust_binding_execution_matches_full_python_nirs4all_oracle"
+execution = "caller-supplied libn4m shared library (NIRS4ALL_METHODS_LIB)"
+
+[[binding]]
+language = "wasm"
+level = "parity-validated"
+run_symbol = "runPortablePipeline"
+run_source = "bindings/wasm/src/execution.js"
+parity_gate = "bindings/wasm/tests/parity.test.js"
+execution = "@nirs4all/methods-wasm module"
+
+[[binding]]
+language = "r"
+level = "parity-validated"
+run_symbol = "nirs4all_run_portable_pipeline"
+run_source = "bindings/r/R/execution.R"
+parity_gate = "bindings/r/tests/parity.R"
+execution = "nirs4all-methods R binding (n4m / pls4all)"
+
+[[binding]]
+language = "matlab"
+level = "parity-validated"
+run_symbol = "runPortablePipeline"
+run_source = "bindings/matlab/+nirs4all/runPortablePipeline.m"
+parity_gate = "bindings/matlab/tests/parity.m"
+execution = "nirs4all-methods +pls4all MATLAB/Octave MEX shims"
+
+# Upstream domains (formats, io, datasets, dag_ml, dag_ml_data) are re-exported
+# through lazy import proxies/loaders only. The aggregate itself does not wrap or
+# execute their operators, so its own capability over them is `metadata`; the
+# actual execution capability is whatever the installed upstream provides. This
+# is recorded honestly rather than claimed as aggregate execution.
+[upstream_domains]
+level = "metadata"
+note = "lazy re-export only; execution capability is upstream-provided"
+keys = ["formats", "io", "datasets", "dag_ml", "dag_ml_data"]
