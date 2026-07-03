@@ -30,6 +30,8 @@ PYTHONPATH=/home/delete/nirs4all/nirs4all \
 Then run:
 
 ```bash
+make check-wasm-methods-artifact \
+  NIRS4ALL_METHODS_ROOT=/path/to/nirs4all-methods
 NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist \
 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 npm test --prefix bindings/wasm

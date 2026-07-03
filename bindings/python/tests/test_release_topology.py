@@ -391,6 +391,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("NIRS4ALL_METHODS_JS_DIST=", npm_runs)
         self.assertIn("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1", npm_runs)
         self.assertIn("npm test --prefix bindings/wasm", npm_runs)
+        makefile = (ROOT / "Makefile").read_text()
+        self.assertIn("check-wasm-methods-artifact:", makefile)
+        self.assertIn("test-wasm-parity-strict: check-wasm-methods-artifact", makefile)
+        self.assertIn("index.js n4m.js n4m.wasm", makefile)
 
         r_workflow = _load_workflow_yaml("release-r.yml")
         r_jobs = r_workflow["jobs"]

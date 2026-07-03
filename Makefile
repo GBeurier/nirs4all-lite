@@ -4,10 +4,11 @@ NIRS4ALL_METHODS_ROOT ?= $(if $(wildcard nirs4all-methods),$(abspath nirs4all-me
 NIRS4ALL_METHODS_R_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/r/n4m
 NIRS4ALL_METHODS_LIB_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/cpp/src
 NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/generated
+NIRS4ALL_METHODS_JS_DIST ?= $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
-.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity test-wasm test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
@@ -36,9 +37,31 @@ test-python-v1-surfaces:
 test-python-parity:
 	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
 
+check-wasm-methods-artifact:
+	@missing=""; \
+	for file in index.js n4m.js n4m.wasm; do \
+		if [ ! -f "$(NIRS4ALL_METHODS_JS_DIST)/$$file" ]; then \
+			missing="$${missing}$${missing:+, }$$file"; \
+		fi; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		printf '%s\n' "ERROR: nirs4all-methods JS/WASM dist is incomplete: $(NIRS4ALL_METHODS_JS_DIST) (missing $$missing)"; \
+		printf '%s\n' "Build/stage it in the methods checkout:"; \
+		printf '%s\n' "  cd $(NIRS4ALL_METHODS_ROOT)"; \
+		printf '%s\n' "  cmake --preset emscripten"; \
+		printf '%s\n' "  cmake --build --preset emscripten --target pls4all_wasm --parallel"; \
+		printf '%s\n' "  cd bindings/js && npm ci && npm run build && npm run stage:wasm"; \
+		printf '%s\n' "Or set NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist."; \
+		exit 1; \
+	fi
+
 test-wasm:
 	npm ci --prefix bindings/wasm
 	npm test --prefix bindings/wasm
+
+test-wasm-parity-strict: check-wasm-methods-artifact
+	npm ci --prefix bindings/wasm
+	NIRS4ALL_METHODS_JS_DIST="$(NIRS4ALL_METHODS_JS_DIST)" NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 npm test --prefix bindings/wasm
 
 test-wasm-v1-surfaces:
 	npm ci --prefix bindings/wasm

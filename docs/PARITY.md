@@ -106,14 +106,45 @@ PYTHONPATH=/home/delete/nirs4all/nirs4all \
 ```
 
 Run the WASM parity gate after building/staging `nirs4all-methods` JS/WASM.
-Set `NIRS4ALL_METHODS_JS_DIST` when the methods checkout is not a sibling of
-this repository. Set `NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1` to make a
-missing methods artefact fail instead of skip:
+The Core tests need a complete Methods JS dist containing `index.js`, `n4m.js`,
+and `n4m.wasm`. Without that dist, the two WASM execution/parity tests skip by
+default; with strict mode they fail before any comparison. Use the preflight to
+turn an incomplete local Methods checkout into an explicit failure without
+requiring Node or Emscripten to be available in the Core repo:
+
+```bash
+make check-wasm-methods-artifact \
+  NIRS4ALL_METHODS_ROOT=../RC-v1-methods
+```
+
+Build/stage the Methods package from a checkout with Node/npm and Emscripten
+(`emcc`/`emcmake`) available:
+
+```bash
+cd /path/to/nirs4all-methods
+cmake --preset emscripten
+cmake --build --preset emscripten --target pls4all_wasm --parallel
+cd bindings/js
+npm ci
+npm run build
+npm run stage:wasm
+```
+
+Set `NIRS4ALL_METHODS_JS_DIST` when the methods checkout is not the default
+sibling. Set `NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1` to make a missing methods
+artifact fail instead of skip:
 
 ```bash
 NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist \
 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 npm test --prefix bindings/wasm
+```
+
+The equivalent strict make target is:
+
+```bash
+make test-wasm-parity-strict \
+  NIRS4ALL_METHODS_ROOT=/path/to/nirs4all-methods
 ```
 
 Run the strict Python parity gate with `nirs4all-methods` importable and a
