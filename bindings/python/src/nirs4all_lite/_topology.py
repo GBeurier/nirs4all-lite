@@ -261,6 +261,16 @@ _V1_RELEASE_SURFACES: list[dict[str, Any]] = [
         "tool_policy": "required",
     },
     {
+        "ecosystem": "rust",
+        "registry": "crates.io",
+        "distribution": "nirs4all",
+        "namespace": "nirs4all",
+        "package_manifest": "bindings/rust/nirs4all/Cargo.toml",
+        "release_workflow": "release-crates.yml",
+        "local_gate": "test-rust",
+        "tool_policy": "required",
+    },
+    {
         "ecosystem": "r",
         "registry": "cran/r-universe",
         "distribution": "nirs4all",
@@ -269,6 +279,16 @@ _V1_RELEASE_SURFACES: list[dict[str, Any]] = [
         "release_workflow": "release-r.yml",
         "local_gate": "test-r-if-available",
         "tool_policy": "skip-locally-if-r-missing",
+    },
+    {
+        "ecosystem": "matlab_octave",
+        "registry": "github-release",
+        "distribution": "nirs4all-matlab-octave",
+        "namespace": "+nirs4all",
+        "package_manifest": "bindings/matlab/README.md",
+        "release_workflow": "release-matlab.yml",
+        "local_gate": "test-matlab-parity-if-available",
+        "tool_policy": "skip-locally-if-octave-missing",
     },
 ]
 

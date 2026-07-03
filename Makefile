@@ -8,11 +8,11 @@ NIRS4ALL_METHODS_JS_DIST ?= $(abspath $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist)
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
-.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity test-matlab-parity-if-available check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
-test-v1-surfaces: test-python-v1-surfaces test-wasm-v1-surfaces test-r-v1-surfaces-if-available
+test-v1-surfaces: test-rust test-python-v1-surfaces test-wasm-v1-surfaces test-r-v1-surfaces-if-available test-matlab-parity-if-available
 
 test-rust:
 	cargo fmt --all --check
@@ -125,6 +125,13 @@ test-matlab-parity:
 	NIRS4ALL_METHODS_MATLAB_PATH=$(NIRS4ALL_METHODS_MATLAB_PATH) \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 	octave --quiet --eval "addpath('bindings/matlab/tests'); parity"
+
+test-matlab-parity-if-available:
+	@if command -v octave >/dev/null 2>&1; then \
+		$(MAKE) test-matlab-parity; \
+	else \
+		printf '%s\n' "SKIP/RISK: MATLAB/Octave execution parity not checked: octave is not installed"; \
+	fi
 
 check-r: build-r
 	R CMD check --no-manual $(DIST_DIR)/r/nirs4all_*.tar.gz

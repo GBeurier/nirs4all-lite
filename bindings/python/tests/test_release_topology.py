@@ -287,11 +287,14 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(upstream_rows["datasets"]["status"], "external-optional")
         self.assertEqual(upstream_rows["datasets"]["default_inclusion"], "external")
 
-    def test_python_r_and_wasm_are_explicit_v1_release_surfaces(self) -> None:
+    def test_language_bindings_are_explicit_v1_release_surfaces(self) -> None:
         manifest = n4lite.release_topology_manifest()
         pyproject = _load_pyproject()
         r_description = _load_r_description()
         wasm_package = _load_wasm_package()
+        rust_cargo = tomllib.loads(
+            (ROOT / "bindings/rust/nirs4all/Cargo.toml").read_text()
+        )
         makefile = (ROOT / "Makefile").read_text()
 
         surfaces = {
@@ -304,34 +307,47 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
 
         self.assertEqual(
             set(surfaces),
-            {"python", "javascript_wasm", "r"},
+            {"python", "javascript_wasm", "rust", "r", "matlab_octave"},
         )
         expected_names = {
             "python": pyproject["project"]["name"],
             "javascript_wasm": wasm_package["name"],
+            "rust": rust_cargo["package"]["name"],
             "r": r_description["Package"],
+            "matlab_octave": "nirs4all-matlab-octave",
         }
         expected_workflows = {
             "python": "release-python.yml",
             "javascript_wasm": "release-npm.yml",
+            "rust": "release-crates.yml",
             "r": "release-r.yml",
+            "matlab_octave": "release-matlab.yml",
         }
         expected_release_gates = {
             "python": ("test-python", "required"),
             "javascript_wasm": ("test-wasm", "required"),
+            "rust": ("test-rust", "required"),
             "r": ("test-r-if-available", "skip-locally-if-r-missing"),
+            "matlab_octave": (
+                "test-matlab-parity-if-available",
+                "skip-locally-if-octave-missing",
+            ),
         }
         expected_surface_gate_targets = {
             "python": "test-python-v1-surfaces",
             "javascript_wasm": "test-wasm-v1-surfaces",
+            "rust": "test-rust",
             "r": "test-r-v1-surfaces-if-available",
+            "matlab_octave": "test-matlab-parity-if-available",
         }
         self.assertEqual(
             _makefile_target_dependencies(makefile, "test-v1-surfaces"),
             [
+                "test-rust",
                 "test-python-v1-surfaces",
                 "test-wasm-v1-surfaces",
                 "test-r-v1-surfaces-if-available",
+                "test-matlab-parity-if-available",
             ],
         )
         self.assertIn("bindings/python/tests/test_release_topology.py", makefile)
@@ -343,6 +359,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("command -v R >/dev/null 2>&1", makefile)
         self.assertIn(
             "SKIP/RISK: R V1 public surface not checked: R/Rscript is not installed",
+            makefile,
+        )
+        self.assertIn("command -v octave >/dev/null 2>&1", makefile)
+        self.assertIn(
+            "SKIP/RISK: MATLAB/Octave execution parity not checked: octave is not installed",
             makefile,
         )
         self.assertIn("set -eu", makefile)
