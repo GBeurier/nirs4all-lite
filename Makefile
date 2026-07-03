@@ -4,7 +4,7 @@ NIRS4ALL_METHODS_ROOT ?= $(if $(wildcard nirs4all-methods),$(abspath nirs4all-me
 NIRS4ALL_METHODS_R_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/r/n4m
 NIRS4ALL_METHODS_LIB_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/cpp/src
 NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/generated
-NIRS4ALL_METHODS_JS_DIST ?= $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist
+NIRS4ALL_METHODS_JS_DIST ?= $(abspath $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist)
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
