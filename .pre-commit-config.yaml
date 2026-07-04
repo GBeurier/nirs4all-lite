@@ -1,0 +1,14 @@
+# Local hygiene hooks. Rust `cargo fmt`/`clippy` and binding checks run in CI.
+# Install: uvx pre-commit install    Run all: uvx pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: detect-private-key
