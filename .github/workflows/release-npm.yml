@@ -115,6 +115,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Resolve release publish guard
+        id: release-guard
+        run: |
+          python3 scripts/release_guard.py \
+            --github-repository "${GITHUB_REPOSITORY}" \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --github-output "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -163,7 +170,10 @@ jobs:
           set -euo pipefail
           # Publish on a non-pre-release tag push, OR on workflow_dispatch with
           # publish=true. Pre-release tags (containing '-') never publish.
-          if [ "${{ github.event_name }}" = "push" ] && [[ "${GITHUB_REF_NAME}" == v* ]] && [[ "${GITHUB_REF_NAME}" != *-* ]]; then
+          if [ "${{ steps.release-guard.outputs.allow_publish }}" != "true" ]; then
+            do=false
+            echo "${{ steps.release-guard.outputs.reason }}"
+          elif [ "${{ github.event_name }}" = "push" ] && [[ "${GITHUB_REF_NAME}" == v* ]] && [[ "${GITHUB_REF_NAME}" != *-* ]]; then
             do=true
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publish }}" = "true" ]; then
             do=true

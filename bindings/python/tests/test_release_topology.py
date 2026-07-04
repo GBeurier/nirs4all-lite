@@ -1,4 +1,5 @@
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -115,6 +116,22 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("n4a", manifest["python"]["additive_imports"])
         self.assertIn("nirs4all_core", manifest["python"]["additive_imports"])
         self.assertIn("nirs4all", manifest["python"]["reserved_non_imports"])
+        self.assertEqual(
+            manifest["release_policy"]["publish_from_repo"],
+            "GBeurier/nirs4all-core",
+        )
+        self.assertEqual(
+            manifest["release_policy"]["legacy_repo"],
+            "GBeurier/nirs4all-lite",
+        )
+        self.assertEqual(
+            manifest["release_policy"]["legacy_repo_behavior"],
+            "build-only-no-publish",
+        )
+        self.assertEqual(
+            manifest["release_policy"]["workflow_dispatch_behavior"],
+            "allow-validation-no-publish",
+        )
 
     def test_manifest_returns_a_deep_copy_for_consumers(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -466,6 +483,64 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "${{ github.workspace }}/nirs4all-methods/bindings/matlab",
         )
         self.assertNotIn("continue-on-error", _load_workflow("release-matlab.yml"))
+
+    def test_release_guard_blocks_canonical_publish_from_legacy_repo(self) -> None:
+        script = ROOT / "scripts/release_guard.py"
+        legacy = subprocess.run(
+            [
+                "python3",
+                str(script),
+                "--github-repository",
+                "GBeurier/nirs4all-lite",
+                "--event-name",
+                "push",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        current = dict(
+            line.split("=", 1) for line in legacy.stdout.splitlines() if "=" in line
+        )
+        self.assertEqual(current["allow_publish"], "false")
+        self.assertEqual(current["legacy_repo"], "GBeurier/nirs4all-lite")
+        self.assertEqual(current["publish_from_repo"], "GBeurier/nirs4all-core")
+        self.assertIn("legacy repo", current["reason"])
+
+        canonical = subprocess.run(
+            [
+                "python3",
+                str(script),
+                "--github-repository",
+                "GBeurier/nirs4all-core",
+                "--event-name",
+                "push",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        current = dict(
+            line.split("=", 1) for line in canonical.stdout.splitlines() if "=" in line
+        )
+        self.assertEqual(current["allow_publish"], "true")
+        self.assertEqual(current["current_repo"], "GBeurier/nirs4all-core")
+
+    def test_release_workflows_consult_release_guard_before_publish(self) -> None:
+        workflows = {
+            "release-python.yml": "allow_publish",
+            "release-crates.yml": "allow_publish",
+            "release-npm.yml": "allow_publish",
+            "release-r.yml": "allow_publish",
+            "release-source.yml": "allow_publish",
+            "release-matlab.yml": "allow_publish",
+        }
+
+        for workflow_name, sentinel in workflows.items():
+            with self.subTest(workflow=workflow_name):
+                workflow = _load_workflow(workflow_name)
+                self.assertIn("scripts/release_guard.py", workflow)
+                self.assertIn(sentinel, workflow)
 
     def test_wasm_package_locks_typechecked_optional_peers(self) -> None:
         package = _load_wasm_package()

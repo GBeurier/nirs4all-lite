@@ -87,15 +87,33 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  guard:
+    name: Resolve canonical release repo
+    runs-on: ubuntu-latest
+    outputs:
+      allow_publish: ${{ steps.release-guard.outputs.allow_publish }}
+      reason: ${{ steps.release-guard.outputs.reason }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Resolve release publish guard
+        id: release-guard
+        run: |
+          python3 scripts/release_guard.py \
+            --github-repository "${GITHUB_REPOSITORY}" \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --github-output "${GITHUB_OUTPUT}"
+
   publish-pypi:
     name: Publish to PyPI (OIDC)
-    needs: build
+    needs:
+      - build
+      - guard
     runs-on: ubuntu-latest
     # Production tags only. Pre-release tags (anything containing '-', e.g.
     # v0.1.0-alpha.1) are excluded so they never reach PyPI; and never on a
     # workflow_dispatch dry run — only a real tag push publishes. Mirrors the
     # nirs4all-io / nirs4all-formats / nirs4all-methods convention.
-    if: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && github.event_name != 'workflow_dispatch' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && github.event_name != 'workflow_dispatch' && needs.guard.outputs.allow_publish == 'true' }}
     # Use the `pypi` GitHub environment so the OIDC token carries an
     # `environment: pypi` claim, matching the Trusted Publisher on pypi.org.
     environment:

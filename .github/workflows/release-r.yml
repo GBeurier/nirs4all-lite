@@ -211,12 +211,21 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Resolve release publish guard
+        id: release-guard
+        run: |
+          python3 scripts/release_guard.py \
+            --github-repository "${GITHUB_REPOSITORY}" \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --github-output "${GITHUB_OUTPUT}"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nirs4all-r-tarball
           path: dist-r/
 
       - name: Upload to the matching Release
+        if: steps.release-guard.outputs.allow_publish == 'true'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: dist-r/*.tar.gz

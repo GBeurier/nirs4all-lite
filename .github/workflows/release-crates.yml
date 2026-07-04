@@ -43,6 +43,13 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Resolve release publish guard
+        id: release-guard
+        run: |
+          python3 scripts/release_guard.py \
+            --github-repository "${GITHUB_REPOSITORY}" \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --github-output "${GITHUB_OUTPUT}"
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Validate tag matches the crate version
@@ -60,10 +67,13 @@ jobs:
       - name: Publish the nirs4all crate to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          DRY: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run != 'false') && '1' || '' }}
+          DRY: ${{ (steps.release-guard.outputs.allow_publish != 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != 'false')) && '1' || '' }}
         run: |
           set -euo pipefail
           if [ -n "${DRY}" ]; then
+            if [ "${{ steps.release-guard.outputs.allow_publish }}" != "true" ]; then
+              echo "${{ steps.release-guard.outputs.reason }}"
+            fi
             cargo publish -p nirs4all --dry-run
           else
             # crates.io is immutable: tolerate an already-uploaded version on a

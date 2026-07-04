@@ -475,6 +475,13 @@ _RELEASE_POINTERS: dict[str, Any] = {
     },
 }
 
+_RELEASE_POLICY: dict[str, str] = {
+    "publish_from_repo": "GBeurier/nirs4all-core",
+    "legacy_repo": "GBeurier/nirs4all-lite",
+    "legacy_repo_behavior": "build-only-no-publish",
+    "workflow_dispatch_behavior": "allow-validation-no-publish",
+}
+
 _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     "schema": "nirs4all-core.release-topology.v2",
     "aggregate": {
@@ -510,6 +517,7 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     "v1_release_surfaces": _V1_RELEASE_SURFACES,
     "upstream_components": _UPSTREAM_COMPONENTS,
     "release_pointers": _RELEASE_POINTERS,
+    "release_policy": _RELEASE_POLICY,
 }
 
 
