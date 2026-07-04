@@ -1,22 +1,22 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
-title: "nirs4all-lite"
+title: "nirs4all-core"
 abstract: >-
   A portable aggregate distribution (Rust core + Python/R/MATLAB/Octave/JS-WASM bindings) that
   re-exports dag-ml, dag-ml-data, nirs4all-formats, nirs4all-io, nirs4all-datasets, and
-  nirs4all-methods without adding new parsers or methods. (Being renamed to nirs4all-core.)
+  nirs4all-methods without adding new parsers or methods.
 type: software
 authors:
   - family-names: Beurier
     given-names: Gregory
     email: beurier@cirad.fr
     affiliation: CIRAD
-repository-code: "https://github.com/GBeurier/nirs4all-lite"
+repository-code: "https://github.com/GBeurier/nirs4all-core"
 url: "https://nirs4all.org"
 license:
   - CECILL-2.1
   - AGPL-3.0-or-later
-version: "0.2.0"
+version: "0.2.4"
 keywords:
   - NIRS
   - spectroscopy

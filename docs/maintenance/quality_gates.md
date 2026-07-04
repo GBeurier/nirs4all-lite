@@ -29,5 +29,6 @@ floating, by design. Dependabot covers github-actions + cargo + the python/wasm 
 
 ## Deepest-hardening roadmap
 
-- Complete the `nirs4all-lite → nirs4all-core` rename cutover (stale RTD slug / URLs) — see `release_checklist.md`.
+- Finish the `nirs4all-lite` PyPI alias-release cutover after the canonical
+  `nirs4all-core` publish — see `release_checklist.md`.
 - Coverage floor once the aggregate surface stabilizes.

@@ -47,7 +47,7 @@ def main() -> int:
     elif current_repo == legacy_repo:
         reason = (
             f"{current_repo} is the legacy repo; canonical publish is disabled "
-            f"until the GitHub rename/cutover lands on {publish_from_repo}."
+            f"because releases now belong to {publish_from_repo}."
         )
     else:
         reason = (

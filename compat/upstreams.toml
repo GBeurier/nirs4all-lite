@@ -6,6 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
+ref = "7e9a881d0939f79f799bf155bafd69dddc56d7ac"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "wasm"]
 python_imports = ["dag_ml"]
@@ -14,6 +15,7 @@ wasm_packages = ["dag-ml-wasm"]
 [[upstream]]
 key = "dag_ml_data"
 repo = "GBeurier/dag-ml-data"
+ref = "22157227e2a8c678292cc91db6c31bf92e04d37a"
 role = "Sample-aligned data contracts for DAG/ML runtimes"
 bindings = ["rust", "c", "python", "r", "wasm"]
 python_imports = ["dag_ml_data"]
@@ -23,24 +25,27 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
+ref = "07beca5b67623f8660eca904332565a1c96b2a1c"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
 r_packages = ["nirs4allformats"]
-wasm_packages = ["nirs4all-formats-wasm"]
+wasm_packages = ["@nirs4all/formats-wasm"]
 
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
+ref = "023421ce16e1e6403a6b805275a0e511f011a9b9"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
 r_packages = ["nirs4allio"]
-wasm_packages = ["nirs4all-io-wasm"]
+wasm_packages = ["@nirs4all/io-wasm"]
 
 [[upstream]]
 key = "datasets"
 repo = "GBeurier/nirs4all-datasets"
+ref = "8551c9f0f31dc96c5ac75d5d6857b6468ba84136"
 role = "DOI-pinned NIRS dataset catalog"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_datasets", "nirs4all.datasets"]
@@ -50,7 +55,7 @@ wasm_packages = ["@nirs4all/datasets-wasm"]
 [[upstream]]
 key = "methods"
 repo = "GBeurier/nirs4all-methods"
-ref = "6f6a3fa0dace421925502d4c8d5cab5102f56944"
+ref = "f452d95aaf828d2e9a5176e8a6815455424483e3"
 role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]

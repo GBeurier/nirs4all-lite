@@ -1,6 +1,6 @@
-# Contributing to nirs4all-lite
+# Contributing to nirs4all-core
 
-`nirs4all-lite` (→ `nirs4all-core`) is a **thin aggregate**: it re-exports the component crates and
+`nirs4all-core` (formerly `nirs4all-lite`) is a **thin aggregate**: it re-exports the component crates and
 exposes them across bindings. **It adds no new parsers, methods, or algorithms.**
 
 - New readers → `nirs4all-formats`. New numerical kernels → `nirs4all-methods` / `dag-ml`.

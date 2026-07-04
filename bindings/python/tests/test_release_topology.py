@@ -101,10 +101,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(manifest["schema"], "nirs4all-core.release-topology.v2")
         self.assertEqual(manifest["aggregate"]["id"], "nirs4all-core")
         self.assertEqual(manifest["aggregate"]["legacy_id"], "nirs4all-lite")
+        self.assertEqual(manifest["aggregate"]["repo"], "GBeurier/nirs4all-core")
+        self.assertEqual(
+            manifest["aggregate"]["legacy_repo"],
+            "GBeurier/nirs4all-lite",
+        )
         self.assertEqual(
             manifest["aggregate"]["target_repo"],
             "GBeurier/nirs4all-core",
         )
+        self.assertEqual(manifest["aggregate"]["repo_rename_status"], "completed")
         self.assertFalse(manifest["aggregate"]["private"])
         self.assertEqual(manifest["python"]["distribution"], "nirs4all-core")
         self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
@@ -131,6 +137,14 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(
             manifest["release_policy"]["workflow_dispatch_behavior"],
             "allow-validation-no-publish",
+        )
+        self.assertEqual(
+            manifest["aggregate"]["repo"],
+            manifest["release_policy"]["publish_from_repo"],
+        )
+        self.assertEqual(
+            manifest["aggregate"]["legacy_repo"],
+            manifest["release_policy"]["legacy_repo"],
         )
 
     def test_manifest_returns_a_deep_copy_for_consumers(self) -> None:
@@ -184,6 +198,45 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             {"src/nirs4all_lite", "src/n4a", "src/nirs4all_core"},
         )
         self.assertNotIn("src/nirs4all", packages)
+
+    def test_public_metadata_uses_current_repo_docs_slug_and_version(self) -> None:
+        pyproject = _load_pyproject()
+        wasm_package = _load_wasm_package()
+        r_description = _load_r_description()
+        workspace_cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
+        rust_cargo = tomllib.loads(
+            (ROOT / "bindings/rust/nirs4all/Cargo.toml").read_text()
+        )
+        citation = yaml.safe_load((ROOT / "CITATION.cff").read_text())
+        docs_conf = (ROOT / "docs/conf.py").read_text()
+
+        expected_repo = "https://github.com/GBeurier/nirs4all-core"
+        self.assertEqual(pyproject["project"]["urls"]["Repository"], expected_repo)
+        self.assertEqual(
+            pyproject["project"]["urls"]["Issues"],
+            f"{expected_repo}/issues",
+        )
+        self.assertEqual(
+            workspace_cargo["workspace"]["package"]["repository"],
+            expected_repo,
+        )
+        self.assertEqual(wasm_package["repository"]["url"], f"git+{expected_repo}.git")
+        self.assertIn(expected_repo, r_description["URL"])
+        self.assertEqual(r_description["BugReports"], f"{expected_repo}/issues")
+        self.assertEqual(citation["title"], "nirs4all-core")
+        self.assertEqual(citation["repository-code"], expected_repo)
+        self.assertIn(
+            'ogp_site_url = "https://nirs4all-core.readthedocs.io/en/latest/"',
+            docs_conf,
+        )
+        self.assertNotIn("nirs4all-lite.readthedocs.io", docs_conf)
+
+        current_version = rust_cargo["package"]["version"]
+        self.assertEqual(current_version, "0.2.4")
+        self.assertEqual(pyproject["project"]["version"], current_version)
+        self.assertEqual(wasm_package["version"], current_version)
+        self.assertEqual(r_description["Version"], current_version)
+        self.assertEqual(citation["version"], current_version)
 
     def test_namespace_facades_are_machine_readable(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -506,6 +559,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(current["legacy_repo"], "GBeurier/nirs4all-lite")
         self.assertEqual(current["publish_from_repo"], "GBeurier/nirs4all-core")
         self.assertIn("legacy repo", current["reason"])
+        self.assertIn("releases now belong to GBeurier/nirs4all-core", current["reason"])
 
         canonical = subprocess.run(
             [
@@ -525,6 +579,33 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
         self.assertEqual(current["allow_publish"], "true")
         self.assertEqual(current["current_repo"], "GBeurier/nirs4all-core")
+
+    def test_version_guard_runs_only_on_canonical_release_repo(self) -> None:
+        workflow = _load_workflow_yaml("version-guard.yml")
+        steps = workflow["jobs"]["guard"]["steps"]
+        release_guard = _step_by_id(workflow["jobs"]["guard"], "release-guard")
+        guard_step = _step_by_name(
+            workflow["jobs"]["guard"],
+            "Manifest must not be ahead of the latest tag",
+        )
+        skip_step = _step_by_name(workflow["jobs"]["guard"], "Skip legacy repo version guard")
+
+        self.assertIn("scripts/release_guard.py", release_guard["run"])
+        self.assertEqual(
+            guard_step["if"],
+            "steps.release-guard.outputs.allow_publish == 'true'",
+        )
+        self.assertEqual(
+            skip_step["if"],
+            "steps.release-guard.outputs.allow_publish != 'true'",
+        )
+        self.assertTrue(
+            any(
+                step.get("run") == "python -m pip install --quiet packaging"
+                and step.get("if") == "steps.release-guard.outputs.allow_publish == 'true'"
+                for step in steps
+            )
+        )
 
     def test_release_workflows_consult_release_guard_before_publish(self) -> None:
         workflows = {
@@ -548,11 +629,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         root_lock = lock["packages"][""]
         expected_peers = {
             "@nirs4all/datasets-wasm",
+            "@nirs4all/formats-wasm",
+            "@nirs4all/io-wasm",
             "@nirs4all/methods-wasm",
             "dag-ml-data-wasm",
             "dag-ml-wasm",
-            "nirs4all-formats-wasm",
-            "nirs4all-io-wasm",
         }
 
         self.assertEqual(lock["lockfileVersion"], 3)

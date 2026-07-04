@@ -1,6 +1,6 @@
 # Security policy
 
-`nirs4all-lite` (being renamed to `nirs4all-core`) is a portable **aggregate distribution**: it
+`nirs4all-core` (formerly `nirs4all-lite`) is a portable **aggregate distribution**: it
 re-exports the Rust cores of `dag-ml`, `dag-ml-data`, `nirs4all-formats`, `nirs4all-io`,
 `nirs4all-datasets`, and `nirs4all-methods` across Python / R / MATLAB / Octave / JS-WASM bindings.
 It adds **no new parsers or algorithms**.

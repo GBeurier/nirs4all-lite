@@ -353,7 +353,7 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         },
         "packages": {
             "rust": [],
-            "npm": ["nirs4all-formats-wasm"],
+            "npm": ["@nirs4all/formats-wasm"],
             "r": ["nirs4allformats"],
             "matlab": [],
             "c_abi": [],
@@ -375,7 +375,7 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         },
         "packages": {
             "rust": [],
-            "npm": ["nirs4all-io-wasm"],
+            "npm": ["@nirs4all/io-wasm"],
             "r": ["nirs4allio"],
             "matlab": [],
             "c_abi": [],
@@ -487,9 +487,10 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     "aggregate": {
         "id": "nirs4all-core",
         "legacy_id": "nirs4all-lite",
-        "repo": "GBeurier/nirs4all-lite",
+        "repo": "GBeurier/nirs4all-core",
+        "legacy_repo": "GBeurier/nirs4all-lite",
         "target_repo": "GBeurier/nirs4all-core",
-        "repo_rename_status": "pending-github-rename",
+        "repo_rename_status": "completed",
         "owner_boundary": "aggregate",
         "default_inclusion": "base",
         "private": False,

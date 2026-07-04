@@ -16,7 +16,7 @@
 # Trusted Publisher on pypi.org for project `nirs4all-core` (release blocker:
 # does not exist yet; the old `nirs4all-lite` publisher does not carry over)
 # with:
-#   owner = GBeurier, repo = nirs4all-lite (nirs4all-core after the repo rename),
+#   owner = GBeurier, repo = nirs4all-core,
 #   workflow = release-python.yml, environment = pypi
 # (the SAME convention as nirs4all-formats / nirs4all-io / nirs4all-methods).
 #

@@ -5,12 +5,13 @@
 
 ## Release blockers (external / admin)
 
-- [ ] **`nirs4all-lite → nirs4all-core` rename cutover** completed (stale `nirs4all-lite.readthedocs.io`
-      slug + pyproject/Cargo URLs still point at the old name).
+- [ ] **Final `nirs4all-lite` PyPI alias release** prepared after the
+      `nirs4all-core` publish; do not yank existing `nirs4all-lite` versions.
 - [ ] **PyPI Trusted Publisher for `nirs4all-core`** created (does not exist yet).
 - [ ] **crates.io `nirs4all` + npm `nirs4all`** names owned/claimed; `@nirs4all` npm org secured.
-- [ ] Every pinned upstream is **published at a compatible version**: `dag-ml` 0.2.0, `dag-ml-data` 0.2.0
-      (crates.io), and `nirs4all-formats` / `nirs4all-io` / `nirs4all-datasets` / **`nirs4all-methods` ≥ 1.0.0**
+- [ ] Every pinned upstream is **published at a compatible version**: `dag-ml` 0.2.2, `dag-ml-data` 0.2.3
+      (crates.io), and `nirs4all-formats ≥ 0.2.2` / `nirs4all-io ≥ 0.1.6` /
+      `nirs4all-datasets ≥ 0.3.3` / **`nirs4all-methods ≥ 1.0.2`**
       — `methods` is on a publish-hold, which paces this whole aggregate.
 
 ## Once unblocked (normal release)
