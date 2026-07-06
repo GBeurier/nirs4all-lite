@@ -2,10 +2,18 @@
 
 ## Scope
 
-`nirs4all-core` (formerly `nirs4all-lite`) is the canonical portable aggregate
-of the low-level nirs4all stack. It wraps and re-exports `dag-ml`,
-`dag-ml-data`, `nirs4all-formats`, `nirs4all-io`, `nirs4all-datasets`, and
-`nirs4all-methods`.
+`nirs4all-lite/` is the legacy compatibility checkout for the portable
+aggregate that was renamed to `nirs4all-core`. The canonical portable aggregate
+now lives in `GBeurier/nirs4all-core`; `GBeurier/nirs4all-lite` remains a
+legacy/redirect line for compatibility and validation only.
+
+Treat this checkout as an alias/transition surface over the same low-level
+nirs4all stack. It wraps and re-exports `dag-ml`, `dag-ml-data`,
+`nirs4all-formats`, `nirs4all-io`, `nirs4all-datasets`, and
+`nirs4all-methods`, but releases must not originate from `nirs4all-lite`.
+Local or CI validation may run here; canonical publishing belongs only to
+`GBeurier/nirs4all-core` (see `bindings/python/src/nirs4all_lite/_topology.py`
+and `scripts/release_guard.py`).
 
 Do not implement new parsers, numerical methods, dataset loaders, or ML
 coordinators here. Add that work to the owning upstream project, then expose it

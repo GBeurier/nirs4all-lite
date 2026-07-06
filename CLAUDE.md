@@ -1,19 +1,24 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in `nirs4all-core`
-(formerly `nirs4all-lite`).
+This file provides guidance to Claude Code when working in the legacy
+`nirs4all-lite` compatibility checkout for `nirs4all-core`.
 
 ## Role
 
-`nirs4all-core` is a portability layer over the low-level nirs4all ecosystem. It
-must expose the same upstream capabilities across Rust, Python, R,
-MATLAB/Octave, and JavaScript/WASM without becoming a second implementation of
-formats, datasets, ML orchestration, or numerical methods.
+`nirs4all-lite` tracks the same portability layer now published canonically as
+`nirs4all-core`. This checkout exists for compatibility, redirect, and
+validation purposes during the cutover; it must expose the same upstream
+capabilities across Rust, Python, R, MATLAB/Octave, and JavaScript/WASM
+without becoming a second implementation of formats, datasets, ML
+orchestration, or numerical methods.
 
 ## Naming
 
-- Repository: `nirs4all-core`; the legacy `nirs4all-lite` line remains a
-  compatibility/redirect alias during the V1 cutover (see `docs/CORE_RENAME.md`)
+- Checkout role: legacy `nirs4all-lite` compatibility line; the canonical
+  repository/publish origin is `GBeurier/nirs4all-core`, while
+  `GBeurier/nirs4all-lite` must not originate releases (see
+  `docs/CORE_RENAME.md`, `bindings/python/src/nirs4all_lite/_topology.py`, and
+  `scripts/release_guard.py`)
 - Python distribution: `nirs4all-core` (RC V1 rename from `nirs4all-lite`;
   the legacy PyPI project stays installable as a thin alias)
 - Python import packages: `nirs4all_lite` (canonical), `n4a` and
@@ -22,6 +27,11 @@ formats, datasets, ML orchestration, or numerical methods.
 
 The full Python `nirs4all` project remains separate until its core can be
 replaced by this aggregate's Python binding intentionally.
+
+Release validation can run from this checkout, but canonical publishing must
+only proceed from `GBeurier/nirs4all-core`. The local release guard enforces
+that split by allowing build/validation on the legacy repo while disabling
+publish steps there.
 
 ## Architecture rules
 
