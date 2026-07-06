@@ -5,6 +5,15 @@
   </picture>
 </p>
 
+# nirs4all-lite legacy checkout
+
+> **Legacy compatibility repository.** The canonical portable aggregate is now
+> [`GBeurier/nirs4all-core`](https://github.com/GBeurier/nirs4all-core).
+> This checkout is kept for compatibility, redirect, and validation during the
+> V1 cutover. Release validation may run here, but publishing must originate
+> only from `GBeurier/nirs4all-core`; the local release guard disables publish
+> steps from `GBeurier/nirs4all-lite`.
+
 # nirs4all-core
 
 `nirs4all-core` (formerly `nirs4all-lite`) is the low-level, portable nirs4all
