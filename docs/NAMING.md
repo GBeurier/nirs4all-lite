@@ -31,10 +31,9 @@ the Python distribution name changed.
 The RC V1 head applies the rename in package metadata (Phase R1 of
 [`CORE_RENAME.md`](CORE_RENAME.md)):
 
-- The Python distribution is **`nirs4all-core`**. `nirs4all-lite` is the legacy
-  distribution name; per the rename runbook it stays installable on PyPI and its
-  final release becomes a thin alias that depends on `nirs4all-core` (Phase R2,
-  registry action — never yank existing versions).
+- The Python distribution is **`nirs4all-core`**. `nirs4all-lite` is the retired
+  distribution name; existing historical artifacts are not yanked, but no final
+  alias release is part of the RC target.
 - The **canonical import root stays `nirs4all_lite`** so every existing import
   keeps working. Inverting canonicity (making `nirs4all_core` the implementation
   and `nirs4all_lite` the alias) is deliberately deferred: the ecosystem
@@ -46,8 +45,7 @@ The RC V1 head applies the rename in package metadata (Phase R1 of
   Execution helpers from `nirs4all_lite` stay reachable through compatibility
   passthrough, but they are not part of `nirs4all_core.__all__`.
 - GitHub repo and Read the Docs now use `nirs4all-core`. The remaining external
-  admin action is the PyPI Trusted Publisher for `nirs4all-core`, plus the final
-  `nirs4all-lite` alias release.
+  admin action is the PyPI Trusted Publisher for `nirs4all-core`.
 
 ```python
 import nirs4all_core          # alias matching the distribution name (additive)
@@ -77,7 +75,7 @@ library and the aggregate continue to coexist.
 The package exposes `release_topology_manifest()` as a machine-checkable summary
 of this contract (schema `nirs4all-core.release-topology.v2`). It records that
 the current Python distribution is `nirs4all-core`, that `nirs4all-lite` is the
-superseded legacy name, and that the `nirs4all_core` import contract is not an
+retired legacy name, and that the `nirs4all_core` import contract is not an
 execution engine.
 
 ## `n4a` token disambiguation (GOV-004)

@@ -5,19 +5,20 @@
   </picture>
 </p>
 
-# nirs4all-lite legacy checkout
+# nirs4all-lite retired checkout
 
-> **Legacy compatibility repository.** The canonical portable aggregate is now
+> **Retired audit repository.** The canonical portable aggregate is now
 > [`GBeurier/nirs4all-core`](https://github.com/GBeurier/nirs4all-core).
-> This checkout is kept for compatibility, redirect, and validation during the
-> V1 cutover. Release validation may run here, but publishing must originate
-> only from `GBeurier/nirs4all-core`; the local release guard disables publish
-> steps from `GBeurier/nirs4all-lite`.
+> This checkout is kept only for old-branch audit and cutover validation.
+> Release validation may run here, but publishing must originate only from
+> `GBeurier/nirs4all-core`; the local release guard disables publish steps from
+> `GBeurier/nirs4all-lite`. No public `nirs4all-lite` compatibility alias is
+> maintained for the RC target.
 
 # nirs4all-core
 
-`nirs4all-core` (formerly `nirs4all-lite`) is the low-level, portable nirs4all
-distribution. It aggregates:
+`nirs4all-core` is the low-level, portable nirs4all distribution. It
+aggregates:
 
 - `dag-ml`
 - `dag-ml-data`
@@ -40,10 +41,11 @@ surface, native bindings, release glue, and parity checks.
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
-The Python distribution is `nirs4all-core` (RC V1 rename from `nirs4all-lite`);
-it cannot use the bare `nirs4all` name because the full Python `nirs4all`
-library owns it. Other language bindings use `nirs4all`. The canonical Python
-import root stays `nirs4all_lite` for compatibility.
+The Python distribution is `nirs4all-core`; it cannot use the bare `nirs4all`
+name because the full Python `nirs4all` library owns it. Other language
+bindings use `nirs4all`. This retired checkout still contains the historical
+`nirs4all_lite` implementation path so old release topology evidence can be
+audited, but it is not a public alias target.
 
 The Python aggregate also exposes two **additive, non-shadowing** import facades
 (see [`docs/NAMING.md`](docs/NAMING.md)): the brand root `n4a` (`import n4a`) and

@@ -35,10 +35,9 @@ The PyPI Trusted Publisher must be created once by the maintainer for project
 `nirs4all-core` with: owner `GBeurier`, repo `nirs4all-core`, workflow
 `release-python.yml`, environment `pypi`. **Release blocker:** the
 `nirs4all-core` project/publisher does not exist yet; the old `nirs4all-lite`
-publisher does not carry over. The legacy `nirs4all-lite` PyPI project stays
-installable — its final release becomes a thin alias depending on
-`nirs4all-core` (see
-[`CORE_RENAME.md`](CORE_RENAME.md) Phase R2); never yank existing versions.
+publisher does not carry over. Existing historical `nirs4all-lite` PyPI
+artifacts are not yanked, but no new public compatibility alias release is part
+of the RC target (see [`CORE_RENAME.md`](CORE_RENAME.md) Phase R2).
 
 `nirs4all-datasets` is **external/optional everywhere** and is never bundled: a
 Python extra (`nirs4all-core[datasets]`, excluded from `[all]`), an R `Suggests`

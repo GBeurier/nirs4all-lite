@@ -1,8 +1,13 @@
 # `nirs4all-lite` → `nirs4all-core` rename runbook
 
+> **Superseded policy note (2026-07-09):** the V1 RC target does not keep a
+> public `nirs4all-lite` compatibility alias. This runbook is retained as a
+> historical cutover record. Current publish and registry work happens from
+> `GBeurier/nirs4all-core`; this checkout is audit/validation only.
+
 This is the ordered, concrete procedure for promoting the aggregate from
-`nirs4all-lite` to `nirs4all-core` **without breaking current production package
-availability**. Originally drafted by the RC-E language-surface lane as a
+`nirs4all-lite` to `nirs4all-core`. Originally drafted by the RC-E
+language-surface lane as a
 rename-readiness record; topology/naming ownership and the ecosystem-level
 moves belong to the coordinator / RC-A.
 
@@ -18,8 +23,9 @@ moves belong to the coordinator / RC-A.
 > pinned the old id — only the intentionally-stale committed aggregation lock,
 > which is regenerated at final head selection. Phase R2 is partially executed:
 > the GitHub repository and Read the Docs slug are now `nirs4all-core`. The
-> remaining admin blocker is the PyPI `nirs4all-core` Trusted Publisher plus the
-> final `nirs4all-lite` alias release.
+> remaining admin blocker is the PyPI `nirs4all-core` Trusted Publisher. The
+> final `nirs4all-lite` alias release mentioned by earlier drafts is no longer
+> part of the RC target.
 
 Governance context: `SW2_GOV_CORE_NAMING_spec.md` (GOV-003/GOV-004),
 `A13_A13-core-release.md` (DEC-GOV-001/002, staged T0→T2), and
@@ -29,9 +35,9 @@ bare `nirs4all` name and are unaffected.
 
 ## Invariants that must hold at every step
 
-1. **PyPI `nirs4all-lite` stays installable** before, during, and after cutover.
-   After the flip it becomes a thin alias/successor that depends on
-   `nirs4all-core`; `pip install nirs4all-lite` must keep working.
+1. **PyPI `nirs4all-core` is the only current Python aggregate publication.**
+   Existing historical `nirs4all-lite` artifacts are not yanked, but no new
+   public compatibility alias release is maintained for the RC target.
 2. **Rust / npm / R / MATLAB are untouched.** They already use the bare
    `nirs4all` name (crate / npm package / `library(nirs4all)` / `+nirs4all`).
    The rename is Python-distribution-only.
@@ -39,8 +45,8 @@ bare `nirs4all` name and are unaffected.
    modelling library owns it until an intentional core cutover; neither
    `n4a`, `nirs4all_core`, nor `nirs4all_lite` may define a top-level `nirs4all`
    module.
-4. **No behaviour fork.** `nirs4all-core` is the same code lineage, published as
-   an alias/successor — never a divergent re-implementation.
+4. **No behaviour fork.** `nirs4all-core` is the same code lineage, never a
+   divergent re-implementation.
 
 ## Phase R1 — in-repo edits (EXECUTED by RC-A, except item 2)
 
@@ -63,19 +69,18 @@ bare `nirs4all` name and are unaffected.
      `legacy_repo = "GBeurier/nirs4all-lite"`;
    - `python.distribution = "nirs4all-core"`, `canonical_import` unchanged
      (`nirs4all_lite`), `legacy_distribution_status = "superseded"`;
-   - `install_distributions`: `nirs4all-core` → `status = "current"` with
-     `workflow = "release-python.yml"`; `nirs4all-lite` kept as the legacy
-     alias row (`status = "legacy-superseded"`, no workflow/artifact);
+   - `install_distributions`: `nirs4all-core` -> `status = "current"` with
+     `workflow = "release-python.yml"`; any `nirs4all-lite` row is retired
+     historical metadata with no workflow/artifact;
    - schema id bumped to `nirs4all-core.release-topology.v2` (not a silent
      rename: shape changed, consumers audited — none pinned the old id).
 4. Guard tests in `test_release_topology.py` flipped **in the same change** —
-   **done**: they now assert the new canonical name and the `nirs4all-lite`
-   alias row. `test_facade.py` unchanged (canonical/alias `__name__`s did not
-   swap; item 2 deferred).
+   **done**: they now assert the new canonical name and the retired
+   `nirs4all-lite` row. `test_facade.py` unchanged (canonical/implementation
+   `__name__`s did not swap; item 2 deferred).
 5. Source/SBOM naming — **done**: `release-source.yml` prefix and the manifest
    row renamed `nirs4all-lite-source-sbom` → `nirs4all-core-source-sbom`
-   (cosmetic; keep the old artifact name as an alias for one release if
-   downstreams fetch it).
+   (cosmetic; no new public legacy artifact alias is part of the RC target).
 6. Cosmetic diagnostics sweep — **done**: the "outside the current
    nirs4all-lite portable subset" strings in `_pipeline.py`,
    `bindings/r/R/pipeline.R`, `bindings/rust/nirs4all/src/lib.rs`,
@@ -87,33 +92,35 @@ bare `nirs4all` name and are unaffected.
 These require repository-admin or registry credentials and are recorded here:
 
 - **GitHub repo**: `GBeurier/nirs4all-core` is the canonical repository. Keep
-  `GBeurier/nirs4all-lite` only as a legacy redirect/alias reference.
+  `GBeurier/nirs4all-lite` only as a retired audit reference if it remains
+  visible.
 - **Ecosystem submodule pin** (owned by RC-A / coordinator): update the
   `nirs4all-ecosystem` submodule path/URL for the renamed repo.
 - **PyPI**: register/claim `nirs4all-core` and create its Trusted Publisher
   (owner `GBeurier`, repo `nirs4all-core`, workflow `release-python.yml`,
-  environment `pypi`); publish `nirs4all-core` from `release-python.yml`; then
-  publish a final `nirs4all-lite` release whose only dependency is
-  `nirs4all-core` (alias wheel) so invariant (1) holds. Never yank existing
-  `nirs4all-lite` versions.
+  environment `pypi`); publish `nirs4all-core` from `release-python.yml`. Never
+  yank existing historical `nirs4all-lite` versions, but do not publish a new
+  alias wheel for the RC target.
 - **Read the Docs**: `nirs4all-core` is the canonical slug; leave
-  `nirs4all-lite` only as a legacy redirect/alias if it remains configured.
+  `nirs4all-lite` only as a retired historical reference if it remains
+  configured.
 - **Docs site / `nirs4all.org`**: install snippets updated on the org RC head
   (RC-A); that head must not deploy before the PyPI `nirs4all-core` publish.
 
 ## Phase R3 — verification (after R1 + R2)
 
-- `pip install nirs4all-core` and `pip install nirs4all-lite` both succeed;
-  `import nirs4all_core`, `import n4a`, and the legacy `import nirs4all_lite` all
-  work; `import nirs4all` still resolves to the full library (invariant 3).
+- `pip install nirs4all-core` succeeds; `import nirs4all_core`, `import n4a`,
+  and the retained implementation import `import nirs4all_lite` work from the
+  core package; `import nirs4all` still resolves to the full library
+  (invariant 3).
 - `make test-python-v1-surfaces` passes with the flipped guard tests.
 - Rust/npm/R/MATLAB gates unchanged and green (invariant 2).
-- `release_topology_manifest()` reports `nirs4all-core` as `current` and
-  `nirs4all-lite` as the alias.
+- `release_topology_manifest()` reports `nirs4all-core` as `current` and any
+  `nirs4all-lite` entry as retired/superseded, with no publish workflow.
 
 ## One-line status
 
 Phase R1 is executed on the RC V1 head (canonical-import inversion deferred
 with its lockstep requirement recorded). Remaining work is the PyPI Trusted
-Publisher plus the final `nirs4all-lite` alias release, then Phase R3
-verification.
+Publisher, then Phase R3 verification. No final legacy alias release is part of
+the current RC target.
