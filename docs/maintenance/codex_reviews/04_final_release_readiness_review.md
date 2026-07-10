@@ -3,12 +3,14 @@
 Consolidated into the ecosystem-level **Gate 5**. Per-repo Codex effort was on **Gate 3** (no findings).
 
 ## ⛔ Release readiness: BLOCKED (governance hardened only)
-`nirs4all-lite` was hardened for community-health/CI/governance, **not** for release. Per ecosystem Gate 0,
-its release is blocked on external/admin items (see `release_checklist.md`):
-- Final `nirs4all-lite` alias release is still pending after the canonical
-  `nirs4all-core` publish.
-- PyPI Trusted Publisher for `nirs4all-core` not created; crates.io/npm `nirs4all` names unowned.
-- Every pinned upstream must be published at a compatible version — **`nirs4all-methods` ≥ 1.0.2 is on a
-  publish-hold**, which paces the whole aggregate; `io` is mid-refactor.
+`nirs4all-lite` was hardened for community-health/CI/governance, **not** for release. This review is
+historical and superseded by the lite-to-core cutover: `nirs4all-lite` is now a retired audit checkout,
+and no final PyPI compatibility/alias release is planned.
+
+Canonical release readiness now belongs to `nirs4all-core` and the ecosystem cockpit:
+- PyPI Trusted Publisher, crates.io/npm name ownership, and upstream dependency availability are tracked
+  against `nirs4all-core`.
+- Existing historical `nirs4all-lite` artifacts should remain available, but this repository must not be
+  tagged or published.
 
 Push-hardening is complete and CI-green; **do not tag/publish** until the blockers clear.

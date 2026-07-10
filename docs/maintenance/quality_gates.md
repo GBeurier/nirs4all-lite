@@ -29,6 +29,6 @@ floating, by design. Dependabot covers github-actions + cargo + the python/wasm 
 
 ## Deepest-hardening roadmap
 
-- Finish the `nirs4all-lite` PyPI alias-release cutover after the canonical
-  `nirs4all-core` publish — see `release_checklist.md`.
+- Keep this retired checkout aligned with the no-release policy in `release_checklist.md`.
+  No new `nirs4all-lite` PyPI compatibility/alias release is part of the RC target.
 - Coverage floor once the aggregate surface stabilizes.

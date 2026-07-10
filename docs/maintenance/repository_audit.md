@@ -1,6 +1,10 @@
 # Repository audit — nirs4all-lite
 
 > Generated from the automated pre-release audit (workflow wf_1fc87351-29f); the **Deepest hardening roadmap** section records the fullest realistic hardening even where the pragmatic pass does not implement it. Reviewed at Codex Gate 1.
+>
+> **Superseded release note:** this audit predates the final lite-to-core policy. The current policy is:
+> `nirs4all-lite` is a retired audit checkout, no new compatibility/alias release is planned, and canonical
+> aggregate releases originate only from `nirs4all-core`.
 
 - **Mode:** IN SCOPE — pragmatic hardening + push
 - **Baseline HEAD:** `ba959a1`
@@ -8,7 +12,7 @@
 - **Stack:** Rust 2021 workspace (single crate bindings/rust/nirs4all, libloading shim, deps dag-ml 0.2.2 / dag-ml-data 0.2.3 + serde_json/serde_yaml). Python 3.11+ pure-python wheel (hatchling backend, dist name nirs4all-core, import roots nirs4all_lite + n4a + nirs4all_core, dep PyYAML>=6, optional extras for each upstream). JS/WASM pure-ESM (node 22, TypeScript 5.9 typecheck, yaml dep, upstream *-wasm optional peer deps). R pure-R binding (NeedsCompilation: no). MATLAB/Octave source facade. Build orchestration via Makefile; docs via Sphinx/MyST on Read the Docs. Versions all at 0.2.4, single-source-of-truth = Rust crate version propagated by scripts/bump_version.sh.
 
 ## Release-readiness verdict
-nirs4all-core (legacy nirs4all-lite alias line) is a mature, well-instrumented aggregate distribution: CI is green across Rust/Python/npm/R/Octave plus a strict cross-language numerical-parity job against a full-Python oracle, and all six tag-triggered release workflows are already hardened (OIDC/Trusted Publishing for PyPI, npm provenance, CycloneDX SBOM + keyless Sigstore attestation + SHA256SUMS, least-privilege permissions, dry-run gates, and a version-guard that forbids un-tagged version bumps on main). The dominant release blockers are external/administrative rather than code: the PyPI Trusted Publisher for nirs4all-core does not yet exist, the final nirs4all-lite alias release must still be cut, the crates.io/npm 'nirs4all' names must be owned, and every pinned upstream (dag-ml, dag-ml-data, formats, io, methods, datasets) must already be published at its exact version or both install and publish fail. Governance hygiene is the main low-risk gap: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, CITATION.cff, dependabot, editorconfig, pre-commit, and issue/PR templates are all absent, and ci.yml alone lacks a least-privilege permissions block and runs a heavy parity job on every push. No secrets or real vulnerabilities were found. Push safety is strong for main (no publish on branch push) but sharp for tags: a single v*.*.* tag fans out to six immutable-registry publishers, so tag pushes must go through the dry-run path first.
+nirs4all-core (formerly developed through the nirs4all-lite line) is a mature, well-instrumented aggregate distribution: CI is green across Rust/Python/npm/R/Octave plus a strict cross-language numerical-parity job against a full-Python oracle, and all six tag-triggered release workflows are already hardened (OIDC/Trusted Publishing for PyPI, npm provenance, CycloneDX SBOM + keyless Sigstore attestation + SHA256SUMS, least-privilege permissions, dry-run gates, and a version-guard that forbids un-tagged version bumps on main). This `nirs4all-lite` checkout is no longer a release vehicle: the previous alias-release path is retired and must not be used. The dominant release blockers now live in the canonical `nirs4all-core` repo and ecosystem cockpit: registry publisher setup/name ownership and published upstream dependency availability. Governance hygiene is the main low-risk gap recorded by the historical audit: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, CITATION.cff, dependabot, editorconfig, pre-commit, and issue/PR templates were absent, and ci.yml alone lacked a least-privilege permissions block and ran a heavy parity job on every push. No secrets or real vulnerabilities were found. Push safety is strong for main (no publish on branch push) but sharp for tags: a single v*.*.* tag fans out to six immutable-registry publishers, so tag pushes must go through the dry-run path first in the canonical repo only.
 
 ## Gate commands (detected)
 | key | value |
@@ -46,7 +50,7 @@ nirs4all-core (legacy nirs4all-lite alias line) is a mature, well-instrumented a
 ## Packaging
 - **name:** `nirs4all-core (PyPI) / nirs4all (crate, npm) / nirs4all (R, MATLAB)` — **version:** `0.2.4`
 - **issues:**
-- Final nirs4all-lite alias release remains pending after the canonical nirs4all-core publish; existing nirs4all-lite releases must not be yanked
+- The former nirs4all-lite alias-release path is retired; existing nirs4all-lite releases must not be yanked, but no new alias release is planned.
 - RELEASE BLOCKER (documented in release-python.yml header): the PyPI Trusted Publisher for project nirs4all-core does not exist yet; the old nirs4all-lite publisher does not carry over, so a tag push will fail to publish to PyPI until the maintainer creates it
 - Three different published names across ecosystems (PyPI nirs4all-core, crates.io nirs4all, npm nirs4all) — each must be free/owned before first release; workflow comments flag this as an assumption
 - Aggregate depends on upstreams that must already be published at the pinned versions: crate depends on dag-ml 0.2.2 + dag-ml-data 0.2.3 on crates.io; pyproject extras require nirs4all-formats>=0.2.2 / nirs4all-io>=0.1.6 / nirs4all-datasets>=0.3.3 / nirs4all-methods>=1.0.2 / dag-ml>=0.2.2 / dag-ml-data>=0.2.3 on PyPI — release/install fails if any is absent
@@ -87,10 +91,10 @@ nirs4all-core (legacy nirs4all-lite alias line) is a mature, well-instrumented a
 - Add .github/dependabot.yml covering cargo (root + bindings/rust), npm (bindings/wasm), and github-actions ecosystems.
 - Add .editorconfig and a .pre-commit-config.yaml wrapping cargo fmt --check + ruff (if adopted) so contributors run the gate locally.
 - Add .github issue templates and a PULL_REQUEST_TEMPLATE.md.
-- Bump classifiers from 'Development Status :: 3 - Alpha' to Beta once the publishers and alias release land.
+- Bump classifiers from 'Development Status :: 3 - Alpha' to Beta only in the canonical release repo once publishers and upstream availability are settled.
 
 ## Deepest hardening roadmap (fullest realistic hardening)
-- Complete the remaining release cutover (docs/CORE_RENAME.md Phase R2): PyPI Trusted Publisher creation for nirs4all-core, claim crates.io + npm 'nirs4all' names, then publish the final nirs4all-lite alias release.
+- Complete the remaining canonical release cutover in `nirs4all-core`: PyPI Trusted Publisher creation for nirs4all-core and ownership of the crates.io + npm `nirs4all` names. Do not publish a final `nirs4all-lite` alias release.
 - Pin all third-party GitHub Actions to full commit SHAs (with a comment naming the version) across all 8 workflows; keep first-party actions/* on majors or SHA-pin those too.
 - Add an OpenSSF Scorecard workflow, CodeQL (for the JS/TS binding + Python), and actions/dependency-review-action on PRs.
 - Introduce coverage measurement per binding (Python coverage, cargo-llvm-cov, node --experimental-test-coverage) and set an enforced threshold gate; wire coverage.xml into CI instead of leaving it a stale local artifact.
